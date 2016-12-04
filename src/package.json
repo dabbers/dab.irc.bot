@@ -1,0 +1,30 @@
+{
+  "name": "debot.js",
+  "version": "0.1.0",
+  "description": "A javascript based, modular IRC bot.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dabbers/DeBot.js.git"
+  },
+  "keywords": [
+    "dab",
+    "irc",
+    "debot",
+    "bot",
+    "framework",
+    "modular"
+  ],
+  "author": "dab",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dabbers/DeBot.js/issues"
+  },
+  "homepage": "https://github.com/dabbers/DeBot.js#readme",
+  "dependencies": {
+    "request": "^2.75.0"
+  }
+}

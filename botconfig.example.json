@@ -1,0 +1,151 @@
+/*
+	The following shows an example config you can use to create your bots.
+
+	Please note that all comments must be removed before being allowed to execute.
+	You may keep this example config to be able to refer to the comments
+*/
+{
+	// A string with your possible nicks. This is used for the bot's real name.
+	// each bot will use the format ${OwnerNick}'s bot
+	"OwnerNicks": "Change, Me, Please",
+
+	// This setting lets you determine the fallback option for determining when a user is to
+	// be logged out. You can use either a channel requirement, or use the ISON option. To use ISON,
+	// enter an integer representing the number of seconds between each ISON request that should be used.
+	// A suggested number is somewhere between 600 seconds (10 minutes) and 1,800 seconds (30 minutes)
+	"AuthVerification":"#channel",
+
+	"Networks": {
+		"example": [
+			// Each server consists of host:port. If no :port is given, 6667 is assumed.
+			// You can specify SSL by using +
+			"server1.example.com",
+			"server2.example.com:6667"
+		],
+		"ggxy": [
+			"navi.gamergalaxy.net:+6697",
+			"rana.gamergalaxy.net:+6697"
+		]
+	},
+	// A bot group is basically an entity. Each entity controlls the network its bots connect
+	// to. Each bot can have individual settings and modules.
+	"BotGroups": {
+		// The first bot group name. Used purely for reference
+		"d*bot": {
+			"Networks": [
+				{
+					"Network":"example",
+					// Channels that all bots in this group must join. You can add password too
+					"Channels": [
+						"#channel1",
+						"#channel2 channel2pass"
+					] 
+				},
+				{
+					"Network":"ggxy",
+					"Channels": [
+						"#channel1",
+						"#channel2 channel2pass"
+					] 
+				}
+			],
+			 // The list of bots/connections. Must have at leat 1 bot.
+			"Bots": {
+				// The bot alias. Even if the nick changes, the bot will still be referenced
+				// by this "alias". 
+				"DaBot":{
+					"Nick":"DaBot",
+					"Ident":"thebotidentity",
+					// Individual channel and modules this but will have. Each channel is a 
+					// setting per network.
+					"Channels": {
+						"ggxy": ["#secret password"],
+						"example": ["##otherchannel"]
+					},
+					"Modules":["dtime"],
+					// You can have commands be sent to the server when connecting. You can have messages sent
+					// immediately, or you can have them delayed by x milliseconds. 
+                    "Commands": {
+                        "ggxy": [
+                            "NS IDENTIFY IMustIdentifyWithAnotherRobot?",
+                            {"delay":10000, "command":"PRIVMSG IdleRPG :login DelayedRobotMessage ThisIsADelayedMessage" }
+                        ]
+                    }
+				}
+			},
+			// Modules every bot must load.
+			"Modules": ["Commands"],
+			// The prefix to the botgroup commandsd.
+			"CommandPrefix":"!",
+			"RawCommandPrefix":"!!"
+		},
+		// A second bot group
+		"cibby": {
+			"Networks": [
+				"ggxy"
+			],
+			"Bots": {
+				"Cibby":{
+					"Nick":"Cibby",
+					"Ident":"dabitp",
+					// Individual channel and modules this but will have
+					"Channels":["#secret password"],
+					"Modules":["dtime"]
+				}
+			},
+			// Channels that all bots in this group must be in (cannot part)
+			"Channels": [
+				"#channel1",
+				"#channel2 channel2pass"
+			],
+			// Modules every bot must load.
+			"Modules": ["Commands"]
+		}
+	},
+	"Auth": [
+		/*
+			Users can be a mix of nick!ident@host. Use * for wildcards.
+			Levels range from 1-3. Non-logged in users are level 1.
+			Level 2 can be used for other purposes and level 3 is used for
+			raw commands and such.
+
+			A password can have an encryption function that is used to encrypt a function
+			passed in by the user. The function prototype looks like the following:
+
+			function enc(pw) { your code here }
+
+			A user can also be bound to only login to a certain bot group(s).
+		*/
+		{
+			"login": "*!ident@host",
+			"password": "123abc",
+			"encryption":"{ return pw; }",
+			"level":3
+		},
+
+		{
+			"login": "josh!*@*",
+			"password": "123abc",
+			"encryption":"{ return pw; }",
+			"level":2,
+			"BotGroup":["cibby"]
+		}
+	],
+    "Modules": {
+    	/* 	You can store module specific settings here. Access using
+			 Core.config.Modules.ModuleName.Setting. Ie:
+			 Core.config.Modules.PlexAnnounce.hostname
+		*/
+        "PlexAnnounce": {
+            "hostname": "server name here",
+            "username": "Server owner login name",
+            "password": "Password Here",
+            "lastSeen": 0,
+            "channel": "#Channel to output plex adds",
+            "network": "network name to output plex adds"
+        },
+        "Titles": {
+            "YouTube": "Youtube api key"
+        }
+    }
+}

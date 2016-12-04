@@ -1,0 +1,116 @@
+{
+    "OwnerNicks": "nickname",
+    "AuthVerification": "#channel",
+    "Networks": {
+        "example": [
+            "server1.example.com",
+            "server2.example.com:6667"
+        ]
+    },
+    "BotGroups": {
+        "d*bot": {
+            "Networks": [
+                {
+                    "Network": "example",
+                    "Channels": [
+                        "#channel1",
+                        "#channel2 channel2pass"
+                    ]
+                },
+                {
+                    "Network": "ggxy",
+                    "Channels": [
+                        "#channel1",
+                        "#channel2 channel2pass"
+                    ]
+                }
+            ],
+            "Bots": {
+                "DaBot": {
+                    "Nick": "DaBot",
+                    "Ident": "thebotidentity",
+                    "Channels": {
+                        "ggxy": [
+                            "#secret password"
+                        ],
+                        "example": [
+                            "##otherchannel"
+                        ]
+                    },
+                    "Modules": [
+                        "dtime"
+                    ],
+                    "Commands": {
+                        "ggxy": [
+                            "NS IDENTIFY IMustIdentifyWithAnotherRobot?",
+                            {
+                                "delay": 10000,
+                                "command": "PRIVMSG IdleRPG :login DelayedRobotMessage ThisIsADelayedMessage"
+                            }
+                        ]
+                    }
+                }
+            },
+            "Modules": [
+                "Commands"
+            ],
+            "CommandPrefix": "!",
+            "RawCommandPrefix": "!!"
+        },
+        "cibby": {
+            "Networks": [
+                "ggxy"
+            ],
+            "Bots": {
+                "Cibby": {
+                    "Nick": "Cibby",
+                    "Ident": "dabitp",
+                    "Channels": [
+                        "#secret password"
+                    ],
+                    "Modules": [
+                        "dtime"
+                    ]
+                }
+            },
+            "Channels": [
+                "#channel1",
+                "#channel2 channel2pass"
+            ],
+            "Modules": [
+                "Commands"
+            ]
+        }
+    },
+    "Auth": [
+        {
+            "login": "*!ident@host",
+            "password": "123abc",
+            "encryption": "{ return pw; }",
+            "level": 3
+        },
+        {
+            "login": "josh!*@*",
+            "password": "123abc",
+            "encryption": "{ return pw; }",
+            "level": 2,
+            "BotGroup": [
+                "cibby"
+            ]
+        }
+    ],
+    "Modules": {
+        "PlexAnnounce": {
+            "hostname": "server name here",
+            "username": "Server owner login name",
+            "password": "Password Here",
+            "lastSeen": 0,
+            "channel": "#Channel to output plex adds",
+            "network": "network name to output plex adds",
+            "test": 13
+        },
+        "Titles": {
+            "YouTube": "Youtube api key"
+        }
+    }
+}
