@@ -1,3 +1,4 @@
+import * as path from 'path';
 
 import {Bot} from './Bot';
 import {BotGroup} from './BotGroup';
@@ -40,30 +41,49 @@ export class Defaults {
 }
 
 export class Core {
-    public loaded : boolean = false;
-    public get defaults() {
-        return this._defaults;
+    public static loaded : boolean = false;
+    public static get defaults() {
+        return Core._defaults;
     }
-    public get groups() : { [alias:string] : BotGroup } {
-        return this._groups;
+    // __dirname = /path/to/bot/bin/src/core/Core.js
+    public static config : ManagedConfig.ManagedConfig;
+
+    public static init(config:string) {
+        Core.config = ManagedConfig.ManagedConfig.createConfig(config);
+
+        for(var group in Core.config.BotGroups) {
+            Core.addGroup(group, Core.config.BotGroups[group]);
+        }
     }
 
-    public addGroup(name:string, settings:any) : BotGroup {
+    public static get groups() : { [alias:string] : BotGroup } {
+        return Core._groups;
+    }
+
+    public static addGroup(name:string, settings:any) : BotGroup {
         
-        for(var key in this.defaults.groupSettings) {
-            if (!settings[key]) settings[key] = (<any>this.defaults.groupSettings)[key];
+        for(var key in Core.defaults.groupSettings) {
+            if (!settings[key]) settings[key] = (<any>Core.defaults.groupSettings)[key];
         }
         let group = new BotGroup(name, settings);
-        return null;
+        group.init(Core);
+        return group;
     }
 
-    public delGroup(name:string) {
+    public static delGroup(name:string) {
 
     }
 
-    private _defaults = Object.freeze(new Defaults());
+    public static tick() {
+        this.config.save();
+        for(var group in Core.groups) {
+            Core.groups[group].emit('tick');
+        }
+    }
 
-    private _groups: { [alias:string] : BotGroup } = {};
+    private static _defaults = Object.freeze(new Defaults());
+
+    private static _groups: { [alias:string] : BotGroup } = {};
 }
 
 

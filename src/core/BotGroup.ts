@@ -1,6 +1,7 @@
 import {EventEmitter} from 'events';
 import * as Parser from 'dab.irc.parser/src';
 import * as ircCore from 'dab.irc.core/src';
+import * as Manager from 'dab.irc.manager/src';
 
 import {IModuleHandler} from 'dab.irc.core/src';
 import {IBotModuleContext} from './IBotModuleContext';
@@ -32,6 +33,11 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         return this._bots;
     }
 
+    public tick() : void {
+        for(let i in this.bots) {
+            this.bots[i].emit('tick');
+        }
+    }
     public settings : IGroupConfig;
 
     public load(name: string, noResume?:boolean) : IModuleHandler<IBotModuleContext> {
@@ -69,7 +75,6 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         return this;
     }
     
-
     constructor(alias:string, config:IGroupConfig) {
         this._alias = alias;
         this.settings = JSON.parse(JSON.stringify(config));
@@ -77,6 +82,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         this.moduleHandler = new ModuleHandler(this);
         this.events = new EventEmitter();
 
+        this.on('tick', this.tick);
     }
 
     addBot(bot:Bot) {
@@ -84,8 +90,24 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             return;
         }
 
-        
+        let onconnect = (sender:IBotModuleContext, server:Manager.ManagedServer, message:ircCore.Message) => {
+            for(let network in this.settings.Networks) {
+                if ( this.settings.Networks[network].Network == server.alias) {
+                    this.settings.Networks[network].Channels.forEach( (v, i, a) => {
+                        bot.connections[server.alias].write("JOIN " + v );
+                    });
 
+                    break;
+                }
+            }
+        }
+
+        bot.on(Parser.Numerics.ENDOFMOTD, onconnect);
+        bot.on(Parser.Numerics.ERR_NOMOTD, onconnect);
+
+        bot.on(Parser.Events.PRIVMSG, (sender:IBotModuleContext, server:Manager.ManagedServer, message: ircCore.Message) => {
+
+        });
     }
 
     // Create a new instance of this module. Initialize and do things as needed
@@ -142,10 +164,10 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     /// End recreating event listener methods
     ///
 
-    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:ircCore.Channel, message:ircCore.Message) => any) : ICommandable {
+    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable {
         return this._commandable.addCommand(command, options, cb);
     }
-    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:ircCore.Channel, message:ircCore.Message) => any) : ICommandable{
+    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable{
         return this._commandable.setCommand(command, options, cb);
     }
     delCommand(command:string) : ICommandable {

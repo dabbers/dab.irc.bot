@@ -22,7 +22,7 @@ export class ProxyGroup extends BotGroup {
     public realGroup : BotGroup;
 
     constructor(realGroup:BotGroup) {
-        super();
+        super(realGroup.alias, realGroup.settings);
 
         this.realGroup = realGroup;
     }   

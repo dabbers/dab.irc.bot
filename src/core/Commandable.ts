@@ -10,10 +10,10 @@ export class Commandable implements ICommandable {
     constructor(host:ICommandable) {
         this._host = host;
     }
-    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => any) : ICommandable {
+    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable {
         return this._host;
     }
-    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => any) : ICommandable {
+    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable {
         return this._host;
     }
     delCommand(command:string) : ICommandable {

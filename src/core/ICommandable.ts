@@ -12,8 +12,8 @@ export enum ExceptionTypes {
 
 export interface ICommandable {
 
-    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => any) : ICommandable;
-    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => any) : ICommandable;
+    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
+    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
     delCommand(command:string) : ICommandable;
 
     addException(command:string, type:ExceptionTypes, match:string, secondsd:number) : ICommandable;

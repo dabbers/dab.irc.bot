@@ -1,13 +1,15 @@
 import * as Parser from 'dab.irc.parser/src';
-import * as Core from 'dab.irc.core/src';
+import * as ircCore from 'dab.irc.core/src';
 import { IModuleHandler } from 'dab.irc.core/src';
 import { IBotModuleContext } from './IBotModuleContext';
 import { ICommandable } from './ICommandable';
+import { IGroupConfig } from './ManagedConfig';
 import { ExceptionTypes } from './ICommandable';
 import { Bot } from './Bot';
+import { Core } from './Core';
 export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleContext {
     readonly modules: {
-        [name: string]: Core.IModule<IBotModuleContext>;
+        [name: string]: ircCore.IModule<IBotModuleContext>;
     };
     readonly alias: string;
     readonly isBot: boolean;
@@ -15,6 +17,8 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     readonly bots: {
         [name: string]: Bot;
     };
+    tick(): void;
+    settings: IGroupConfig;
     load(name: string, noResume?: boolean): IModuleHandler<IBotModuleContext>;
     unload(name: string, persist: boolean): IModuleHandler<IBotModuleContext>;
     say(net: string, destination?: string, message?: string): IBotModuleContext;
@@ -26,7 +30,11 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     join(net: string, channel?: string, password?: string): IBotModuleContext;
     part(net: string, channel?: string, reason?: string): IBotModuleContext;
     raw(net: string, text?: string): IBotModuleContext;
-    constructor();
+    constructor(alias: string, config: IGroupConfig);
+    addBot(bot: Bot): void;
+    init(context: Core): void;
+    resume(context: Core, state: any): void;
+    uninit(): any;
     on(event: string, listener: Function): IBotModuleContext;
     once(event: string, listener: Function): IBotModuleContext;
     emit(event: string, ...args: any[]): IBotModuleContext;
@@ -35,8 +43,8 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     removeAllListeners(event?: string): IBotModuleContext;
     listeners(event: string): Function[];
     eventNames(): (string | symbol)[];
-    addCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, channel: Core.Channel, message: Core.Message) => any): ICommandable;
-    setCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, channel: Core.Channel, message: Core.Message) => any): ICommandable;
+    addCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, channel: ircCore.Channel, message: ircCore.Message) => any): ICommandable;
+    setCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, channel: ircCore.Channel, message: ircCore.Message) => any): ICommandable;
     delCommand(command: string): ICommandable;
     addException(command: string, type: ExceptionTypes, match: string, seconds: number): ICommandable;
     listExceptions(command: string, type: ExceptionTypes): ICommandable;

@@ -30,9 +30,16 @@ export declare class Defaults {
     };
 }
 export declare class Core {
-    loaded: boolean;
-    readonly defaults: Defaults;
-    addGroup(name: string, settings: any): BotGroup;
-    delGroup(name: string): void;
-    private _defaults;
+    static loaded: boolean;
+    static readonly defaults: Defaults;
+    static config: ManagedConfig.ManagedConfig;
+    static init(config: string): void;
+    static readonly groups: {
+        [alias: string]: BotGroup;
+    };
+    static addGroup(name: string, settings: any): BotGroup;
+    static delGroup(name: string): void;
+    static tick(): void;
+    private static _defaults;
+    private static _groups;
 }

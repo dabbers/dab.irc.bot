@@ -1,17 +1,19 @@
 import {EventEmitter} from 'events';
 import * as Parser from 'dab.irc.parser/src';
-import * as Core from 'dab.irc.core/src';
+import * as ircCore from 'dab.irc.core/src';
 import * as Manager from 'dab.irc.manager/src';
 
 import {BotGroup} from './BotGroup';
+import {Core} from './Core';
 import {IBotModuleContext} from './IBotModuleContext';
 import {ICommandable} from './ICommandable';
+import {IBotConfig} from './ManagedConfig';
 import {Commandable} from './Commandable';
 import {ExceptionTypes} from './ICommandable';
 
-export class Bot extends Manager.ManagedUser implements Core.IModuleHandler<IBotModuleContext>, IBotModuleContext {
+export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<IBotModuleContext>, IBotModuleContext {
     
-    modules: {[name:string] : Core.IModule<IBotModuleContext> };
+    modules: {[name:string] : ircCore.IModule<IBotModuleContext> };
     public get alias() : string {
         return this._alias;
     }
@@ -23,6 +25,13 @@ export class Bot extends Manager.ManagedUser implements Core.IModuleHandler<IBot
         return true;
     }
 
+    public tick() : void {
+    }
+
+    public settings : IBotConfig;
+
+    public connections: { [alias: string] : ircCore.Connection } = {};
+
     constructor() {
         super("", null, null);
 
@@ -30,11 +39,24 @@ export class Bot extends Manager.ManagedUser implements Core.IModuleHandler<IBot
         this.events = new EventEmitter();
     }
 
-    public load(name: string, noResume?:boolean) : Core.IModuleHandler<IBotModuleContext> {
+    // Create a new instance of this module. Initialize and do things as needed
+    init(context : Core) : void {
+
+    }
+    // We are resuming a persisted state (either in memory or from disk)
+    resume(context:Core, state : any) : void {
+        
+    }
+    // Unloading this module. Return an optional state to store for reloading
+    uninit() : any {
+
+    }
+
+    public load(name: string, noResume?:boolean) : ircCore.IModuleHandler<IBotModuleContext> {
 
         return this;
     }
-    public unload(name: string, persist: boolean) : Core.IModuleHandler<IBotModuleContext> {
+    public unload(name: string, persist: boolean) : ircCore.IModuleHandler<IBotModuleContext> {
         return this;
     }
 
@@ -106,10 +128,10 @@ export class Bot extends Manager.ManagedUser implements Core.IModuleHandler<IBot
     ///
 
 
-    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => any) : ICommandable {
+    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable {
         return this._commandable.addCommand(command, options, cb);
     }
-    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => any) : ICommandable{
+    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable{
         return this._commandable.setCommand(command, options, cb);
     }
     delCommand(command:string) : ICommandable {

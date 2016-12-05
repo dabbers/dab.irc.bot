@@ -9,7 +9,7 @@ class EventTracker {
 exports.EventTracker = EventTracker;
 class ProxyGroup extends BotGroup_1.BotGroup {
     constructor(realGroup) {
-        super();
+        super(realGroup.alias, realGroup.settings);
         this.addedCommands = [];
         this.addedEvents = [];
         this.realGroup = realGroup;

@@ -12,6 +12,7 @@ export interface IBotModuleContext extends ICommandable {
     isBot:boolean;
     group:BotGroup;
 
+    tick() : void;
     load(name: string, noResume?:boolean) : IModuleHandler<IBotModuleContext>;
     unload(name: string, persist: boolean) : IModuleHandler<IBotModuleContext>;
 

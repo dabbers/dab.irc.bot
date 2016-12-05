@@ -17,6 +17,14 @@ class Bot extends Manager.ManagedUser {
     get isBot() {
         return true;
     }
+    tick() {
+    }
+    init(context) {
+    }
+    resume(context, state) {
+    }
+    uninit() {
+    }
     load(name, noResume) {
         return this;
     }

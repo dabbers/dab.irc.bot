@@ -1,4 +1,6 @@
 "use strict";
+const BotGroup_1 = require('./BotGroup');
+const ManagedConfig = require('./ManagedConfig');
 class Defaults {
     get groupSettings() {
         return { "Networks": [], "Bots": {}, "Modules": [], "CommandPrefix": "!" };
@@ -33,22 +35,38 @@ class Defaults {
 }
 exports.Defaults = Defaults;
 class Core {
-    constructor() {
-        this.loaded = false;
-        this._defaults = new Defaults();
+    static get defaults() {
+        return Core._defaults;
     }
-    get defaults() {
-        return this._defaults;
-    }
-    addGroup(name, settings) {
-        for (var key in this.defaults.groupSettings) {
-            if (!settings[key])
-                settings[key] = this.defaults.groupSettings[key];
+    static init(config) {
+        Core.config = ManagedConfig.ManagedConfig.createConfig(config);
+        for (var group in Core.config.BotGroups) {
+            Core.addGroup(group, Core.config.BotGroups[group]);
         }
-        return null;
     }
-    delGroup(name) {
+    static get groups() {
+        return Core._groups;
+    }
+    static addGroup(name, settings) {
+        for (var key in Core.defaults.groupSettings) {
+            if (!settings[key])
+                settings[key] = Core.defaults.groupSettings[key];
+        }
+        let group = new BotGroup_1.BotGroup(name, settings);
+        group.init(Core);
+        return group;
+    }
+    static delGroup(name) {
+    }
+    static tick() {
+        this.config.save();
+        for (var group in Core.groups) {
+            Core.groups[group].emit('tick');
+        }
     }
 }
+Core.loaded = false;
+Core._defaults = Object.freeze(new Defaults());
+Core._groups = {};
 exports.Core = Core;
 //# sourceMappingURL=Core.js.map

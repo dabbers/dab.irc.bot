@@ -1,13 +1,17 @@
 "use strict";
 const events_1 = require('events');
+const Parser = require('dab.irc.parser/src');
 const Commandable_1 = require('./Commandable');
 const ModuleHandler_1 = require('./ModuleHandler');
 class BotGroup {
-    constructor() {
+    constructor(alias, config) {
         this._bots = {};
+        this._alias = alias;
+        this.settings = JSON.parse(JSON.stringify(config));
         this._commandable = new Commandable_1.Commandable(this);
         this.moduleHandler = new ModuleHandler_1.ModuleHandler(this);
         this.events = new events_1.EventEmitter();
+        this.on('tick', this.tick);
     }
     get modules() {
         return this.moduleHandler.modules;
@@ -23,6 +27,11 @@ class BotGroup {
     }
     get bots() {
         return this._bots;
+    }
+    tick() {
+        for (let i in this.bots) {
+            this.bots[i].emit('tick');
+        }
     }
     load(name, noResume) {
         return this.moduleHandler.load(name);
@@ -56,6 +65,25 @@ class BotGroup {
     }
     raw(net, text) {
         return this;
+    }
+    addBot(bot) {
+        if (this.bots[bot.alias]) {
+            return;
+        }
+        let onconnect = (sender, server, channel, message) => {
+            for (let network in this.settings.Networks) {
+            }
+        };
+        bot.on(Parser.Numerics.ENDOFMOTD, onconnect);
+        bot.on(Parser.Numerics.ERR_NOMOTD, onconnect);
+    }
+    init(context) {
+        for (var botAlias in this.settings.Bots) {
+        }
+    }
+    resume(context, state) {
+    }
+    uninit() {
     }
     on(event, listener) {
         this.events.on(event, listener);
