@@ -1,0 +1,1 @@
+{"version":3,"file":"SenderChain.js","sourceRoot":"","sources":["../../../src/core/SenderChain.ts"],"names":[],"mappings":";AAIA;IAMI,YAAY,GAAO,EAAE,KAAc;QAC/B,IAAI,CAAC,GAAG,GAAG,GAAG,CAAC;QACf,IAAI,CAAC,KAAK,GAAG,KAAK,CAAC;IACvB,CAAC;IAED,IAAI,MAAM;QACN,MAAM,CAAC,CAAC,IAAI,CAAC,KAAK,IAAI,IAAI,CAAC,GAAG,CAAC,CAAC;IACpC,CAAC;AACL,CAAC;AAdY,mBAAW,cAcvB,CAAA"}

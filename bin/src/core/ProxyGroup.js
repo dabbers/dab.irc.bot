@@ -21,8 +21,8 @@ class ProxyGroup extends BotGroup_1.BotGroup {
                     case "addCommand":
                         return function (command, options, fn) {
                             let wrappedFunction = (function (fnc) {
-                                return (sender, server, channel, message) => {
-                                    fnc(proxy, server, channel, message);
+                                return (sender, server, message) => {
+                                    fnc(proxy, server, message);
                                 };
                             })(fn);
                             proxy.realGroup.addCommand(command, options, fn);

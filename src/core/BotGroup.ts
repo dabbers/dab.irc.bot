@@ -13,6 +13,7 @@ import {ExceptionTypes} from './ICommandable';
 import {ModuleHandler} from './ModuleHandler';
 import {Bot} from './Bot';
 import {Core} from './Core';
+import {SenderChain} from './SenderChain';
 
 export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleContext {
 
@@ -47,31 +48,39 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         return this.moduleHandler.unload(name, persist);
     }
 
-    say(net:string, destination?:string, message?:string) : IBotModuleContext {
+    say(net:string, destination:string, message:string) : IBotModuleContext {
+        return this.msg(net, destination, message);
+    }
+    msg(net:string, destination:string, message:string) : IBotModuleContext {
+        return this.raw(net, "PRIVMSG " + destination + " :" + message);
+    }
+    notice(net:string, destination:string, message:string) : IBotModuleContext {
+        return this.raw(net, "NOTICE " + destination + " :" + message);
+    }
+    me(net:string, destination:string, message:string) : IBotModuleContext {
+        return this.action(net, destination, message);
+    }
+    action(net:string, destination:string, message:string) : IBotModuleContext {
+        return this.ctcp(net, destination, "PRIVMSG", "ACTION", message);
+    }
+    ctcp(net:string, destination:string, action:string, command:string, message:string) : IBotModuleContext {
+        return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");;
+    }
+    join(net:string, channel:string, password?:string) : IBotModuleContext {
+        return this.raw(net, "JOIN " + channel + " " + password);
+    }
+    part(net:string, channel:string, reason?:string) : IBotModuleContext {
+        return this.raw(net, "PART " + channel + " :" + (reason|| "") );
+    }
+    raw(net:string, text:string) : IBotModuleContext {
+        for(let bot in this.bots) {
+            this.rawBot(net, this.bots[bot], text);
+        }
         return this;
     }
-    msg(net:string, destination?:string, message?:string) : IBotModuleContext {
-        return this;
-    }
-    notice(net:string, destination?:string, message?:string) : IBotModuleContext {
-        return this;
-    }
-    me(net:string, destination?:string, message?:string) : IBotModuleContext {
-        return this;
-    }
-    action(net:string, destination?:string, message?:string) : IBotModuleContext {
-        return this;
-    }
-    ctcp(net:string, destination:string, action:string, command:string, message?:string) : IBotModuleContext {
-        return this;
-    }
-    join(net:string, channel?:string, password?:string) : IBotModuleContext {
-        return this;
-    }
-    part(net:string, channel?:string, reason?:string) : IBotModuleContext {
-        return this;
-    }
-    raw(net:string, text?:string) : IBotModuleContext {
+
+    rawBot(net:string, bot:Bot, text:string) :IBotModuleContext {
+        bot.servers[net].connection.write(text);
         return this;
     }
     
@@ -94,7 +103,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             for(let network in this.settings.Networks) {
                 if ( this.settings.Networks[network].Network == server.alias) {
                     this.settings.Networks[network].Channels.forEach( (v, i, a) => {
-                        bot.connections[server.alias].write("JOIN " + v );
+                        bot.servers[server.alias].connection.write("JOIN " + v );
                     });
 
                     break;
@@ -107,13 +116,50 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
 
         bot.on(Parser.Events.PRIVMSG, (sender:IBotModuleContext, server:Manager.ManagedServer, message: ircCore.Message) => {
 
+            this.emit(Parser.Events.PRIVMSG, this, server, message, bot);
         });
     }
 
+    botCanExecute(bot:Bot, svralias:(string|Manager.ManagedServer), channel:(string|ircCore.Channel)) : boolean {
+        return this.getBotExecutor(svralias, channel).alias == bot.alias;
+    }
+
+    // Will return null if no bot (use the bot you're checking against or the first bot)
+    getBotExecutor(serverAlias:(string|Manager.ManagedServer), channel:(string|ircCore.Channel)) : Bot {
+        let svr:string = null;
+        let chan:string = null;
+        let bot:Bot = null;
+
+        let allbots = Object.keys(this.bots);
+
+        if (serverAlias instanceof Manager.ManagedServer) {
+            svr = serverAlias.alias;
+        }
+        else {
+            svr = serverAlias;
+        }
+
+        if (channel instanceof ircCore.Channel) {
+            chan = channel.target;
+        }
+        else {
+            chan = channel;
+        }
+
+        for(let botnick in allbots) {
+            if (this._channelManager[svr].channel[chan].users[  botnick ]) {
+                bot = this.bots[ botnick ];
+                break;
+            }
+        }
+
+        return bot;
+    }
     // Create a new instance of this module. Initialize and do things as needed
     init(context : Core) : void {
         for(var botAlias in this.settings.Bots) {
-            
+            let bot = Core.addBot(this, botAlias, this.settings.Bots[botAlias]);
+            this.addBot(bot);
         }
     }
     // We are resuming a persisted state (either in memory or from disk)
@@ -164,10 +210,10 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     /// End recreating event listener methods
     ///
 
-    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable {
+    addCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable {
         return this._commandable.addCommand(command, options, cb);
     }
-    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable{
+    setCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable{
         return this._commandable.setCommand(command, options, cb);
     }
     delCommand(command:string) : ICommandable {
@@ -199,4 +245,5 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     private _commandable:ICommandable;
     protected moduleHandler:IModuleHandler<IBotModuleContext>;
     protected _bots:{ [name:string] : Bot} = {};
+    protected _channelManager :  {[alias:string] : Manager.ChannelManager};
 }

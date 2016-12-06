@@ -26,15 +26,15 @@ export interface IBotModuleContext extends ICommandable {
     listeners(event: string) : Function[] ;
     eventNames() : (string|symbol)[] ;
 
-    say(net:string, destination?:string, message?:string) : IBotModuleContext;
-    msg(net:string, destination?:string, message?:string) : IBotModuleContext;
-    notice(net:string, destination?:string, message?:string) : IBotModuleContext;
-    me(net:string, destination?:string, message?:string) : IBotModuleContext;
-    action(net:string, destination?:string, message?:string) : IBotModuleContext;
-    ctcp(net:string, destination:string, action:string, command:string, message?:string) : IBotModuleContext;
-    join(net:string, channel?:string, password?:string) : IBotModuleContext;
-    part(net:string, channel?:string, reason?:string) : IBotModuleContext;
-    raw(net:string, text?:string) : IBotModuleContext;
+    say(net:string, destination:string, message:string) : IBotModuleContext;
+    msg(net:string, destination:string, message:string) : IBotModuleContext;
+    notice(net:string, destination:string, message:string) : IBotModuleContext;
+    me(net:string, destination:string, message:string) : IBotModuleContext;
+    action(net:string, destination:string, message:string) : IBotModuleContext;
+    ctcp(net:string, destination:string, action:string, command:string, message:string) : IBotModuleContext;
+    join(net:string, channel:string, password?:string) : IBotModuleContext;
+    part(net:string, channel:string, reason?:string) : IBotModuleContext;
+    raw(net:string, text:string) : IBotModuleContext;
 
     // Create a new instance of this module. Initialize and do things as needed
     init(context : Core) : void;

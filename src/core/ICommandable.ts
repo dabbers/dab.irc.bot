@@ -2,6 +2,7 @@ import * as Parser from 'dab.irc.parser/src';
 import * as Core from 'dab.irc.core/src';
 
 import {IBotModuleContext} from './IBotModuleContext';
+import {SenderChain} from './SenderChain';
 
 export enum ExceptionTypes {
     Channels,
@@ -12,8 +13,8 @@ export enum ExceptionTypes {
 
 export interface ICommandable {
 
-    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
-    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
+    addCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
+    setCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
     delCommand(command:string) : ICommandable;
 
     addException(command:string, type:ExceptionTypes, match:string, secondsd:number) : ICommandable;

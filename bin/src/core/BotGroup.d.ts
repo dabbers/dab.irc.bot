@@ -1,5 +1,6 @@
 import * as Parser from 'dab.irc.parser/src';
 import * as ircCore from 'dab.irc.core/src';
+import * as Manager from 'dab.irc.manager/src';
 import { IModuleHandler } from 'dab.irc.core/src';
 import { IBotModuleContext } from './IBotModuleContext';
 import { ICommandable } from './ICommandable';
@@ -32,6 +33,8 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     raw(net: string, text?: string): IBotModuleContext;
     constructor(alias: string, config: IGroupConfig);
     addBot(bot: Bot): void;
+    botCanExecute(bot: Bot, svralias: (string | Manager.ManagedServer), channel: (string | ircCore.Channel)): boolean;
+    getBotExecutor(serverAlias: (string | Manager.ManagedServer), channel: (string | ircCore.Channel)): Bot;
     init(context: Core): void;
     resume(context: Core, state: any): void;
     uninit(): any;
@@ -43,8 +46,8 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     removeAllListeners(event?: string): IBotModuleContext;
     listeners(event: string): Function[];
     eventNames(): (string | symbol)[];
-    addCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, channel: ircCore.Channel, message: ircCore.Message) => any): ICommandable;
-    setCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, channel: ircCore.Channel, message: ircCore.Message) => any): ICommandable;
+    addCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, message: ircCore.Message) => any): ICommandable;
+    setCommand(command: string, options: any, cb: (sender: IBotModuleContext, server: Parser.ParserServer, message: ircCore.Message) => any): ICommandable;
     delCommand(command: string): ICommandable;
     addException(command: string, type: ExceptionTypes, match: string, seconds: number): ICommandable;
     listExceptions(command: string, type: ExceptionTypes): ICommandable;
@@ -58,5 +61,8 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     protected moduleHandler: IModuleHandler<IBotModuleContext>;
     protected _bots: {
         [name: string]: Bot;
+    };
+    protected _channelManager: {
+        [alias: string]: Manager.ChannelManager;
     };
 }

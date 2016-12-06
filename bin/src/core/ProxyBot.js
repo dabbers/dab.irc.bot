@@ -9,7 +9,7 @@ class EventTracker {
 exports.EventTracker = EventTracker;
 class ProxyBot extends Bot_1.Bot {
     constructor(realBot, fakeGroup) {
-        super();
+        super(realBot.alias, realBot.group, realBot.settings);
         this.addedCommands = [];
         this.addedEvents = [];
         this.realBot = realBot;
@@ -22,8 +22,8 @@ class ProxyBot extends Bot_1.Bot {
                     case "addCommand":
                         return function (command, options, fn) {
                             let wrappedFunction = (function (fnc) {
-                                return (sender, server, channel, message) => {
-                                    fnc(proxy, server, channel, message);
+                                return (sender, server, message) => {
+                                    fnc(proxy, server, message);
                                 };
                             })(fn);
                             proxy.realBot.addCommand(command, options, wrappedFunction);

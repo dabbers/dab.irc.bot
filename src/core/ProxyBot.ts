@@ -23,7 +23,7 @@ export class ProxyBot extends Bot {
     public realBot : Bot;
 
     constructor(realBot:Bot, fakeGroup:ProxyGroup) {
-        super();
+        super(realBot.alias, realBot.group, realBot.settings);
 
         this.realBot = realBot;
         this._group = fakeGroup;
@@ -35,10 +35,10 @@ export class ProxyBot extends Bot {
             get: (proxy, name) => {
                 switch(name) {
                     case "addCommand":
-                        return function(command:string, options:any, fn:(sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => any) {
+                        return function(command:string, options:any, fn:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) {
                             let wrappedFunction = (function(fnc) { 
-                                return (sender: IBotModuleContext, server:Parser.ParserServer, channel:Core.Channel, message:Core.Message) => {
-                                    fnc(proxy, server, channel, message);
+                                return (sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => {
+                                    fnc(proxy, server, message);
                                 };
                             })(fn);
 

@@ -4,16 +4,17 @@ import * as Core from 'dab.irc.core/src';
 import {IBotModuleContext} from './IBotModuleContext';
 import {ICommandable} from './ICommandable';
 import {ExceptionTypes} from './ICommandable';
+import {SenderChain} from './SenderChain';
 
 
 export class Commandable implements ICommandable {
     constructor(host:ICommandable) {
         this._host = host;
     }
-    addCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable {
+    addCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable {
         return this._host;
     }
-    setCommand(command:string, options:any, cb:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable {
+    setCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable {
         return this._host;
     }
     delCommand(command:string) : ICommandable {

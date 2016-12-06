@@ -1,8 +1,11 @@
 "use strict";
 const events_1 = require('events');
 const Parser = require('dab.irc.parser/src');
+const ircCore = require('dab.irc.core/src');
+const Manager = require('dab.irc.manager/src');
 const Commandable_1 = require('./Commandable');
 const ModuleHandler_1 = require('./ModuleHandler');
+const Core_1 = require('./Core');
 class BotGroup {
     constructor(alias, config) {
         this._bots = {};
@@ -70,15 +73,54 @@ class BotGroup {
         if (this.bots[bot.alias]) {
             return;
         }
-        let onconnect = (sender, server, channel, message) => {
+        let onconnect = (sender, server, message) => {
             for (let network in this.settings.Networks) {
+                if (this.settings.Networks[network].Network == server.alias) {
+                    this.settings.Networks[network].Channels.forEach((v, i, a) => {
+                        bot.servers[server.alias].connection.write("JOIN " + v);
+                    });
+                    break;
+                }
             }
         };
         bot.on(Parser.Numerics.ENDOFMOTD, onconnect);
         bot.on(Parser.Numerics.ERR_NOMOTD, onconnect);
+        bot.on(Parser.Events.PRIVMSG, (sender, server, message) => {
+            this.emit(Parser.Events.PRIVMSG, this, server, message, bot);
+        });
+    }
+    botCanExecute(bot, svralias, channel) {
+        return this.getBotExecutor(svralias, channel).alias == bot.alias;
+    }
+    getBotExecutor(serverAlias, channel) {
+        let svr = null;
+        let chan = null;
+        let bot = null;
+        let allbots = Object.keys(this.bots);
+        if (serverAlias instanceof Manager.ManagedServer) {
+            svr = serverAlias.alias;
+        }
+        else {
+            svr = serverAlias;
+        }
+        if (channel instanceof ircCore.Channel) {
+            chan = channel.target;
+        }
+        else {
+            chan = channel;
+        }
+        for (let botnick in allbots) {
+            if (this._channelManager[svr].channel[chan].users[botnick]) {
+                bot = this.bots[botnick];
+                break;
+            }
+        }
+        return bot;
     }
     init(context) {
         for (var botAlias in this.settings.Bots) {
+            let bot = Core_1.Core.addBot(this, botAlias, this.settings.Bots[botAlias]);
+            this.addBot(bot);
         }
     }
     resume(context, state) {

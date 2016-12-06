@@ -42,16 +42,20 @@ export class Defaults {
 
 export class Core {
     public static loaded : boolean = false;
+    public static get version() : string { 
+        return this._version;
+    }
     public static get defaults() {
         return Core._defaults;
     }
     // __dirname = /path/to/bot/bin/src/core/Core.js
     public static config : ManagedConfig.ManagedConfig;
 
-    public static init(config:string) {
+    public static init(version:string, config:string) {
+        this._version = version;
         Core.config = ManagedConfig.ManagedConfig.createConfig(config);
 
-        for(var group in Core.config.BotGroups) {
+        for(let group in Core.config.BotGroups) {
             Core.addGroup(group, Core.config.BotGroups[group]);
         }
     }
@@ -60,12 +64,21 @@ export class Core {
         return Core._groups;
     }
 
-    public static addGroup(name:string, settings:any) : BotGroup {
-        
-        for(var key in Core.defaults.groupSettings) {
-            if (!settings[key]) settings[key] = (<any>Core.defaults.groupSettings)[key];
+    public static get bots() : { [alias: string] : Bot } {
+        return Core._bots;
+    }
+
+    public static addGroup(name:string, settings?:ManagedConfig.IGroupConfig) : BotGroup {
+        if (settings === undefined) settings = JSON.parse(JSON.stringify(this.defaults.groupSettings));
+        else {
+            for(let key in Core.defaults.groupSettings) {
+                if (!(<any>settings)[key]) (<any>settings)[key] = (<any>Core.defaults.groupSettings)[key];
+            }
         }
+
         let group = new BotGroup(name, settings);
+        this._groups[name] = group;
+
         group.init(Core);
         return group;
     }
@@ -74,9 +87,31 @@ export class Core {
 
     }
 
+    public static addBot(group:BotGroup, alias:string, settings?:ManagedConfig.IBotConfig) : Bot {
+        if (settings === undefined) settings = JSON.parse(JSON.stringify(this.defaults.botSetting));
+        else {
+            for(let key in Core.defaults.botSetting) {
+                if (!(<any>settings)[key]) (<any>settings)[key] = (<any>Core.defaults.botSetting)[key];
+            }
+        }
+
+        if (settings.Nick === undefined || settings.Nick.length == 0) {
+            settings.Nick = alias;
+        }
+
+        if (group === null) {
+            Core.addGroup(alias);
+        }
+
+        let bot = new Bot(alias, group, settings);
+        Core.bots[alias] = bot;
+
+        return bot;
+    }
+
     public static tick() {
         this.config.save();
-        for(var group in Core.groups) {
+        for(let group in Core.groups) {
             Core.groups[group].emit('tick');
         }
     }
@@ -84,6 +119,8 @@ export class Core {
     private static _defaults = Object.freeze(new Defaults());
 
     private static _groups: { [alias:string] : BotGroup } = {};
+    private static _bots: { [alias:string] : Bot } = {};
+    private static _version:string = "0.0.0";
 }
 
 
