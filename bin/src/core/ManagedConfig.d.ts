@@ -1,3 +1,8 @@
+export interface INetworkSettings {
+    host: string;
+    port: number;
+    ssl: boolean;
+}
 export interface INetworkConfig {
     Network: string;
     Channels: string[];
@@ -35,6 +40,7 @@ export interface IAuthConfig {
 export interface IFrameworkConfig {
     OwnerNicks: string;
     AuthVerification: string;
+    ValidateSslCerts: boolean;
     Networks: {
         [alias: string]: string[];
     };
@@ -49,6 +55,7 @@ export interface IFrameworkConfig {
 export declare class ManagedConfig implements IFrameworkConfig {
     OwnerNicks: string;
     AuthVerification: string;
+    ValidateSslCerts: boolean;
     Networks: {
         [alias: string]: string[];
     };

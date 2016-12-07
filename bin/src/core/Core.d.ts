@@ -45,6 +45,7 @@ export declare class Core {
     static addGroup(name: string, settings?: ManagedConfig.IGroupConfig): BotGroup;
     static delGroup(name: string): void;
     static addBot(group: BotGroup, alias: string, settings?: ManagedConfig.IBotConfig): Bot;
+    static randomServer(alias: string): ManagedConfig.INetworkSettings;
     static tick(): void;
     private static _defaults;
     private static _groups;

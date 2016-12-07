@@ -1,5 +1,6 @@
 "use strict";
 const Bot_1 = require('./Bot');
+const SenderChain_1 = require('./SenderChain');
 class EventTracker {
     constructor(event, cb) {
         this.event = event;
@@ -23,7 +24,7 @@ class ProxyBot extends Bot_1.Bot {
                         return function (command, options, fn) {
                             let wrappedFunction = (function (fnc) {
                                 return (sender, server, message) => {
-                                    fnc(proxy, server, message);
+                                    fnc(new SenderChain_1.SenderChain(proxy), server, message);
                                 };
                             })(fn);
                             proxy.realBot.addCommand(command, options, wrappedFunction);

@@ -174,7 +174,7 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
         return this.ctcp(net, destination, "PRIVMSG", "ACTION", message);
     }
     ctcp(net:string, destination:string, action:string, command:string, message:string) : IBotModuleContext {
-        return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");;
+        return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");
     }
     join(net:string, channel:string, password?:string) : IBotModuleContext {
         return this.raw(net, "JOIN " + channel + " " + password);

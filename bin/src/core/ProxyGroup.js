@@ -1,5 +1,6 @@
 "use strict";
 const BotGroup_1 = require('./BotGroup');
+const SenderChain_1 = require('./SenderChain');
 class EventTracker {
     constructor(event, cb) {
         this.event = event;
@@ -22,7 +23,7 @@ class ProxyGroup extends BotGroup_1.BotGroup {
                         return function (command, options, fn) {
                             let wrappedFunction = (function (fnc) {
                                 return (sender, server, message) => {
-                                    fnc(proxy, server, message);
+                                    fnc(new SenderChain_1.SenderChain(sender.bot, proxy), server, message);
                                 };
                             })(fn);
                             proxy.realGroup.addCommand(command, options, fn);

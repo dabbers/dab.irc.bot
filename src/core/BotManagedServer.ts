@@ -13,7 +13,6 @@ export class BotManagedServer extends Manager.ManagedServer {
         this.bot = bot;
     }
 
-    
     emit(event: string, ...args:any[]) {
         // Our ParserServer still relies on its own events for some things
         // as does ManagedServer. Make sure to emit events like normal first.

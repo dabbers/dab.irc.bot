@@ -1,6 +1,32 @@
 import * as fs from 'fs';
 const watch = require("watchwithproxy");
 
+import * as ircCore from 'dab.irc.core/src';
+import * as Parser from 'dab.irc.parser/src';
+
+import {SenderChain} from './SenderChain';
+
+export interface ICommandExceptions {
+    channels:string[];
+    users:string[];
+    chanmodes:string[];
+    levels:string[];
+}
+export interface ICommandSettings {
+    locationbinds : string[];
+    level : number;
+    allowpm : boolean;
+    hidden : boolean;
+    exceptions: ICommandExceptions;
+    timer:number;
+    persist:boolean;
+    code: (sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => any;
+}
+export interface INetworkSettings {
+    host:string;
+    port:number;
+    ssl:boolean;
+}
 export interface INetworkConfig {
     Network:string;
     Channels:string[];
@@ -35,6 +61,7 @@ export interface IAuthConfig {
 export interface IFrameworkConfig {
     OwnerNicks: string;
     AuthVerification:string;
+    ValidateSslCerts:boolean;
     Networks: { [alias:string] : string[] };
     BotGroups: { [alias:string] : IGroupConfig };
 
@@ -45,6 +72,7 @@ export interface IFrameworkConfig {
 export class ManagedConfig implements IFrameworkConfig {
     OwnerNicks: string;
     AuthVerification:string;
+    ValidateSslCerts:boolean;
     Networks: { [alias:string] : string[] };
     BotGroups: { [alias:string] : IGroupConfig };
 

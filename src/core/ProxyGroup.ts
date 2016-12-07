@@ -4,6 +4,8 @@ import * as Parser from 'dab.irc.parser/src';
 import {IBotModuleContext} from './IBotModuleContext';
 import {BotGroup} from './BotGroup';
 import {Bot} from './Bot';
+import {SenderChain} from './SenderChain';
+
 
 export class EventTracker {
     constructor(event:string, cb:Function) {
@@ -34,10 +36,10 @@ export class ProxyGroup extends BotGroup {
             get: (proxy, name) => {
                 switch(name) {
                     case "addCommand":
-                        return function(command:string, options:any, fn:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) {
+                        return function(command:string, options:any, fn:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) {
                             let wrappedFunction = (function(fnc) { 
-                                return (sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => {
-                                    fnc(proxy, server, message);
+                                return (sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => {
+                                    fnc(new SenderChain(sender.bot, proxy), server, message);
                                 };
                             })(fn);
 

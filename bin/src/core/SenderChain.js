@@ -1,7 +1,14 @@
 "use strict";
 class SenderChain {
     constructor(bot, group) {
-        this.bot = bot;
+        if (bot instanceof SenderChain) {
+            if (bot.group)
+                throw new Error("Cannot have existing group in sender chain");
+            this.bot = bot.bot;
+        }
+        else {
+            this.bot = bot;
+        }
         this.group = group;
     }
     get sender() {

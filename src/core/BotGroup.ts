@@ -8,10 +8,14 @@ import {IBotModuleContext} from './IBotModuleContext';
 import {ICommandable} from './ICommandable';
 import {IGroupConfig} from './ManagedConfig';
 import {IBotConfig} from './ManagedConfig';
+import {INetworkConfig} from './ManagedConfig';
+import {ICommandSettings} from './ManagedConfig';
 import {Commandable} from './Commandable';
 import {ExceptionTypes} from './ICommandable';
 import {ModuleHandler} from './ModuleHandler';
 import {Bot} from './Bot';
+import {BotManagedServer} from './BotManagedServer';
+import {BotConnectionContext} from './BotConnectionContext';
 import {Core} from './Core';
 import {SenderChain} from './SenderChain';
 
@@ -92,6 +96,21 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         this.events = new EventEmitter();
 
         this.on('tick', this.tick);
+        let rawCmd = this.settings.RawCommandPrefix || (this.settings.CommandPrefix + this.settings.CommandPrefix);
+        let rawOptions : ICommandSettings = {
+            locationbinds : undefined,
+            level: 3,
+            allowpm: true,
+            persist: false,
+            timer: 0,
+            hidden: true,
+            exceptions: undefined,
+            code: undefined
+        };
+        let rawCode = (sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => {
+
+        };
+        this.addCommand(rawCmd, rawOptions, rawCode);
     }
 
     addBot(bot:Bot) {
@@ -99,9 +118,9 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             return;
         }
 
-        let onconnect = (sender:IBotModuleContext, server:Manager.ManagedServer, message:ircCore.Message) => {
+        let onconnect = (sender:SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => {
             for(let network in this.settings.Networks) {
-                if ( this.settings.Networks[network].Network == server.alias) {
+                if (this.settings.Networks[network].Network == server.alias) {
                     this.settings.Networks[network].Channels.forEach( (v, i, a) => {
                         bot.servers[server.alias].connection.write("JOIN " + v );
                     });
@@ -114,18 +133,56 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         bot.on(Parser.Numerics.ENDOFMOTD, onconnect);
         bot.on(Parser.Numerics.ERR_NOMOTD, onconnect);
 
-        bot.on(Parser.Events.PRIVMSG, (sender:IBotModuleContext, server:Manager.ManagedServer, message: ircCore.Message) => {
+        bot.on(Parser.Events.PRIVMSG, (sender:SenderChain, server:Manager.ManagedServer, message: ircCore.Message) => {
+            if (message instanceof Parser.ConversationMessage) {
+                if (!this.botCanExecute(sender.bot, server, message.destination)) return;
 
-            this.emit(Parser.Events.PRIVMSG, this, server, message, bot);
+                this.emit(Parser.Events.PRIVMSG, new SenderChain(sender.bot, this), server, message, bot);
+            }
         });
     }
 
-    botCanExecute(bot:Bot, svralias:(string|Manager.ManagedServer), channel:(string|ircCore.Channel)) : boolean {
-        return this.getBotExecutor(svralias, channel).alias == bot.alias;
+    delBot(bot:Bot) {
+        if (this.bots[bot.alias]) {
+            delete this.settings.Bots[bot.alias];
+            for(let n in bot.servers) {
+                // Clear our out buffer so our QUIT message will send immediately
+                bot.servers[n].connection.clear();
+                bot.servers[n].connection.write("QUIT :dab.irc.bot Framework v" + Core.version);
+                bot.servers[n].connection.disconnect();
+            }
+
+            delete this.bots[bot.alias];
+        }
+    }
+
+    // By default, any bot in a private message is capable of being an executor.
+    // Channels are the only places a bot executor is decided in. 
+    botCanExecute(bot:Bot, svralias:(string|Manager.ManagedServer), channel:(string|ircCore.Target.ITarget)) : boolean {
+        let svr:string = null;
+        let chan:string = null;
+
+        let allbots = Object.keys(this.bots);
+
+        if (svralias instanceof Manager.ManagedServer) {
+            svr = svralias.alias;
+        }
+        else {
+            svr = svralias;
+        }
+
+        if (typeof channel != "string") {
+            chan = channel.target;
+        }
+        else {
+            chan = channel;
+        }
+
+        return (!bot.servers[svr].isChannel(chan) || this.getBotExecutor(svralias, channel).alias == bot.alias);
     }
 
     // Will return null if no bot (use the bot you're checking against or the first bot)
-    getBotExecutor(serverAlias:(string|Manager.ManagedServer), channel:(string|ircCore.Channel)) : Bot {
+    getBotExecutor(serverAlias:(string|Manager.ManagedServer), channel:(string|ircCore.Target.ITarget)) : Bot {
         let svr:string = null;
         let chan:string = null;
         let bot:Bot = null;
@@ -139,7 +196,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             svr = serverAlias;
         }
 
-        if (channel instanceof ircCore.Channel) {
+        if (typeof channel != "string") {
             chan = channel.target;
         }
         else {
@@ -147,7 +204,9 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         }
 
         for(let botnick in allbots) {
-            if (this._channelManager[svr].channel[chan].users[  botnick ]) {
+            if (!this._channelManager[svr].channel[chan]) continue;
+
+            if (this._channelManager[svr].channel[chan].users[ botnick ]) {
                 bot = this.bots[ botnick ];
                 break;
             }
@@ -157,9 +216,17 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     }
     // Create a new instance of this module. Initialize and do things as needed
     init(context : Core) : void {
-        for(var botAlias in this.settings.Bots) {
+        for(let botAlias in this.settings.Bots) {
             let bot = Core.addBot(this, botAlias, this.settings.Bots[botAlias]);
             this.addBot(bot);
+        }
+
+        for(let modid in this.settings.Modules) {
+            this.load( this.settings.Modules[modid] );
+        }
+
+        for (let net in this.settings.Networks) {
+            this.connect(this.settings.Networks[net].Network);
         }
     }
     // We are resuming a persisted state (either in memory or from disk)
@@ -169,6 +236,54 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     // Unloading this module. Return an optional state to store for reloading
     uninit() : any {
 
+    }
+
+    connect(network:string, connectionString?:(string|string[])) {
+        if (connectionString && !Core.config.Networks[network]) {
+            if (!(connectionString instanceof Array)) {
+                connectionString = [connectionString];
+            }
+            Core.config.Networks[network] = connectionString;
+        }
+
+        if (this._channelManager[network]) {
+            // make sure all bots are connected:
+            for(let bot in this.bots) {
+                if (!this.bots[bot].servers[network].connection.connected) {
+                    // Reconnect the bot if they aren't connected.
+                    this.bots[bot].servers[network].connection.init(this.bots[bot].servers[network].connection.context, true);
+                }
+            }
+            return;
+        }
+
+        let net = Core.randomServer(network);
+        let cm = new Manager.ChannelManager();
+
+        for(let bot in this.bots) {
+            let user = new ircCore.User(this.bots[bot].settings.Nick, this.bots[bot].settings.Ident, null);
+            user.name = Core.config.OwnerNicks + "'s bot";
+
+            let bcc = new BotConnectionContext(user, net.host, net.port, net.ssl, !Core.config.ValidateSslCerts);
+            let con : ircCore.Connection = new ircCore.Connection();
+            let bms =  new BotManagedServer(this.bots[bot], network, bcc, con, null, cm);
+            this.bots[bot].connect(network,bms);
+
+            // We want to wait to connect until all of our objects have created their callbacks
+            // so they can listen to all the incoming messages from the connection.
+            con.init(bcc, true);
+        }
+    }
+
+    disconnect(alias:string) {
+        for(let bot in this.bots) {
+            if (this.bots[bot].servers[alias]) {
+                // Clear our out buffer so our QUIT message will send immediately
+                this.bots[bot].servers[alias].connection.clear();
+                this.bots[bot].servers[alias].connection.write("QUIT :dab.irc.bot Framework v" + Core.version);
+                this.bots[bot].servers[alias].connection.disconnect();
+            }
+        }
     }
 
     ///

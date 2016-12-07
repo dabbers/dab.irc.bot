@@ -5,6 +5,8 @@ import {IBotModuleContext} from './IBotModuleContext';
 import {Bot} from './Bot';
 import {BotGroup} from './BotGroup';
 import {ProxyGroup} from './ProxyGroup';
+import {SenderChain} from './SenderChain';
+
 
 export class EventTracker {
     constructor(event:string, cb:Function) {
@@ -35,10 +37,10 @@ export class ProxyBot extends Bot {
             get: (proxy, name) => {
                 switch(name) {
                     case "addCommand":
-                        return function(command:string, options:any, fn:(sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => any) {
+                        return function(command:string, options:any, fn:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) {
                             let wrappedFunction = (function(fnc) { 
-                                return (sender: IBotModuleContext, server:Parser.ParserServer, message:Core.Message) => {
-                                    fnc(proxy, server, message);
+                                return (sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => {
+                                    fnc(new SenderChain(proxy), server, message);
                                 };
                             })(fn);
 

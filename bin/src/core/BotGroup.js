@@ -5,6 +5,8 @@ const ircCore = require('dab.irc.core/src');
 const Manager = require('dab.irc.manager/src');
 const Commandable_1 = require('./Commandable');
 const ModuleHandler_1 = require('./ModuleHandler');
+const BotManagedServer_1 = require('./BotManagedServer');
+const BotConnectionContext_1 = require('./BotConnectionContext');
 const Core_1 = require('./Core');
 class BotGroup {
     constructor(alias, config) {
@@ -43,30 +45,38 @@ class BotGroup {
         return this.moduleHandler.unload(name, persist);
     }
     say(net, destination, message) {
-        return this;
+        return this.msg(net, destination, message);
     }
     msg(net, destination, message) {
-        return this;
+        return this.raw(net, "PRIVMSG " + destination + " :" + message);
     }
     notice(net, destination, message) {
-        return this;
+        return this.raw(net, "NOTICE " + destination + " :" + message);
     }
     me(net, destination, message) {
-        return this;
+        return this.action(net, destination, message);
     }
     action(net, destination, message) {
-        return this;
+        return this.ctcp(net, destination, "PRIVMSG", "ACTION", message);
     }
     ctcp(net, destination, action, command, message) {
-        return this;
+        return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");
+        ;
     }
     join(net, channel, password) {
-        return this;
+        return this.raw(net, "JOIN " + channel + " " + password);
     }
     part(net, channel, reason) {
-        return this;
+        return this.raw(net, "PART " + channel + " :" + (reason || ""));
     }
     raw(net, text) {
+        for (let bot in this.bots) {
+            this.rawBot(net, this.bots[bot], text);
+        }
+        return this;
+    }
+    rawBot(net, bot, text) {
+        bot.servers[net].connection.write(text);
         return this;
     }
     addBot(bot) {
@@ -118,14 +128,47 @@ class BotGroup {
         return bot;
     }
     init(context) {
-        for (var botAlias in this.settings.Bots) {
+        for (let botAlias in this.settings.Bots) {
             let bot = Core_1.Core.addBot(this, botAlias, this.settings.Bots[botAlias]);
             this.addBot(bot);
+        }
+        for (let modid in this.settings.Modules) {
+            this.load(this.settings.Modules[modid]);
+        }
+        for (let net in this.settings.Networks) {
+            this.connect(this.settings.Networks[net].Network);
         }
     }
     resume(context, state) {
     }
     uninit() {
+    }
+    connect(network, connectionString) {
+        if (connectionString && !Core_1.Core.config.Networks[network]) {
+            if (!(connectionString instanceof Array)) {
+                connectionString = [connectionString];
+            }
+            Core_1.Core.config.Networks[network] = connectionString;
+        }
+        if (this._channelManager[network]) {
+            for (let bot in this.bots) {
+                if (!this.bots[bot].servers[network].connection.connected) {
+                    this.bots[bot].servers[network].connection.init(this.bots[bot].servers[network].connection.context, true);
+                }
+            }
+            return;
+        }
+        let net = Core_1.Core.randomServer(network);
+        let cm = new Manager.ChannelManager();
+        for (let bot in this.bots) {
+            let user = new ircCore.User(this.bots[bot].settings.Nick, this.bots[bot].settings.Ident, null);
+            user.name = Core_1.Core.config.OwnerNicks + "'s bot";
+            let bcc = new BotConnectionContext_1.BotConnectionContext(user, net.host, net.port, net.ssl, !Core_1.Core.config.ValidateSslCerts);
+            let con = new ircCore.Connection();
+            let bms = new BotManagedServer_1.BotManagedServer(this.bots[bot], network, bcc, con, null, cm);
+            this.bots[bot].connect(network, bms);
+            con.init(bcc, true);
+        }
     }
     on(event, listener) {
         this.events.on(event, listener);

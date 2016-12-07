@@ -90,6 +90,13 @@ class Core {
         Core.bots[alias] = bot;
         return bot;
     }
+    static randomServer(alias) {
+        let ran = this.config.Networks[alias][Math.floor((Math.random() * this.config.Networks[alias].length))];
+        let parts = ran.split(':');
+        let port = (parts[1] ? (parts[1][0] == "+" ? parseInt(parts[1].substring(1)) : parseInt(parts[1])) : 6667);
+        let ssl = parts[1][0] == "+";
+        return { "host": parts[0], "port": port, "ssl": ssl };
+    }
     static tick() {
         this.config.save();
         for (let group in Core.groups) {

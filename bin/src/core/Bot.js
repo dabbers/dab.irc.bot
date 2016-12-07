@@ -129,7 +129,6 @@ class Bot extends Manager.ManagedUser {
     }
     ctcp(net, destination, action, command, message) {
         return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");
-        ;
     }
     join(net, channel, password) {
         return this.raw(net, "JOIN " + channel + " " + password);

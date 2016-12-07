@@ -72,7 +72,7 @@ export class Core {
         if (settings === undefined) settings = JSON.parse(JSON.stringify(this.defaults.groupSettings));
         else {
             for(let key in Core.defaults.groupSettings) {
-                if (!(<any>settings)[key]) (<any>settings)[key] = (<any>Core.defaults.groupSettings)[key];
+                if ((<any>settings)[key] == undefined) (<any>settings)[key] = (<any>Core.defaults.groupSettings)[key];
             }
         }
 
@@ -91,7 +91,7 @@ export class Core {
         if (settings === undefined) settings = JSON.parse(JSON.stringify(this.defaults.botSetting));
         else {
             for(let key in Core.defaults.botSetting) {
-                if (!(<any>settings)[key]) (<any>settings)[key] = (<any>Core.defaults.botSetting)[key];
+                if ((<any>settings)[key] == undefined) (<any>settings)[key] = (<any>Core.defaults.botSetting)[key];
             }
         }
 
@@ -107,6 +107,17 @@ export class Core {
         Core.bots[alias] = bot;
 
         return bot;
+    }
+
+    public static randomServer(alias:string) : ManagedConfig.INetworkSettings{
+        let ran = this.config.Networks[alias][Math.floor((Math.random() * this.config.Networks[alias].length))];
+        let parts = ran.split(':');
+        
+        let port = (parts[1] ? (parts[1][0] == "+" ? parseInt(parts[1].substring(1)) : parseInt(parts[1])) : 6667);
+
+        let ssl = parts[1][0] == "+";
+
+        return {"host":parts[0], "port":port, "ssl":ssl };
     }
 
     public static tick() {
