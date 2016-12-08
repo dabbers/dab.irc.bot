@@ -44,4 +44,5 @@ export interface IBotModuleContext extends ICommandable {
     uninit() : any;
 
     modules: {[name:string] : IModule<IBotModuleContext> };
+    hasNetwork(alias:string) : boolean;
 }

@@ -33,6 +33,7 @@ export class BotConnectionContext implements ircCore.IConnectionContext {
     }
 
     connectionEstablishedCallback: (c:ircCore.Connection) => any = (c:ircCore.Connection) => {  
+        console.log("CONNECTION");
         c.write("NICK " + this.me.nick);
         c.write("USER " + this.me.ident + " 8 * :" + this.me.name);
     }

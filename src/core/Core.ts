@@ -41,57 +41,57 @@ export class Defaults {
 }
 
 export class Core {
-    public static loaded : boolean = false;
-    public static get version() : string { 
+    public  loaded : boolean = false;
+    public  get version() : string { 
         return this._version;
     }
-    public static get defaults() {
-        return Core._defaults;
+    public  get defaults() {
+        return this._defaults;
     }
     // __dirname = /path/to/bot/bin/src/core/Core.js
-    public static config : ManagedConfig.ManagedConfig;
+    public  config : ManagedConfig.ManagedConfig;
 
-    public static init(version:string, config:string) {
+    public  init(version:string, config:string) {
         this._version = version;
-        Core.config = ManagedConfig.ManagedConfig.createConfig(config);
+        this.config = ManagedConfig.ManagedConfig.createConfig(config);
 
-        for(let group in Core.config.BotGroups) {
-            Core.addGroup(group, Core.config.BotGroups[group]);
+        for(let group in this.config.BotGroups) {
+            this.addGroup(group, this.config.BotGroups[group]);
         }
     }
 
-    public static get groups() : { [alias:string] : BotGroup } {
-        return Core._groups;
+    public  get groups() : { [alias:string] : BotGroup } {
+        return this._groups;
     }
 
-    public static get bots() : { [alias: string] : Bot } {
-        return Core._bots;
+    public  get bots() : { [alias: string] : Bot } {
+        return this._bots;
     }
 
-    public static addGroup(name:string, settings?:ManagedConfig.IGroupConfig) : BotGroup {
+    public  addGroup(name:string, settings?:ManagedConfig.IGroupConfig) : BotGroup {
         if (settings === undefined) settings = JSON.parse(JSON.stringify(this.defaults.groupSettings));
         else {
-            for(let key in Core.defaults.groupSettings) {
-                if ((<any>settings)[key] == undefined) (<any>settings)[key] = (<any>Core.defaults.groupSettings)[key];
+            for(let key in this.defaults.groupSettings) {
+                if ((<any>settings)[key] == undefined) (<any>settings)[key] = (<any>this.defaults.groupSettings)[key];
             }
         }
 
         let group = new BotGroup(name, settings);
         this._groups[name] = group;
 
-        group.init(Core);
+        group.init(this);
         return group;
     }
 
-    public static delGroup(name:string) {
+    public  delGroup(name:string) {
 
     }
 
-    public static addBot(group:BotGroup, alias:string, settings?:ManagedConfig.IBotConfig) : Bot {
+    public addBot(group:BotGroup, alias:string, settings?:ManagedConfig.IBotConfig) : Bot {
         if (settings === undefined) settings = JSON.parse(JSON.stringify(this.defaults.botSetting));
         else {
-            for(let key in Core.defaults.botSetting) {
-                if ((<any>settings)[key] == undefined) (<any>settings)[key] = (<any>Core.defaults.botSetting)[key];
+            for(let key in this.defaults.botSetting) {
+                if ((<any>settings)[key] == undefined) (<any>settings)[key] = (<any>this.defaults.botSetting)[key];
             }
         }
 
@@ -100,16 +100,16 @@ export class Core {
         }
 
         if (group === null) {
-            Core.addGroup(alias);
+            this.addGroup(alias);
         }
 
         let bot = new Bot(alias, group, settings);
-        Core.bots[alias] = bot;
+        this.bots[alias] = bot;
 
         return bot;
     }
 
-    public static randomServer(alias:string) : ManagedConfig.INetworkSettings{
+    public randomServer(alias:string) : ManagedConfig.INetworkSettings{
         let ran = this.config.Networks[alias][Math.floor((Math.random() * this.config.Networks[alias].length))];
         let parts = ran.split(':');
         
@@ -120,18 +120,18 @@ export class Core {
         return {"host":parts[0], "port":port, "ssl":ssl };
     }
 
-    public static tick() {
+    public tick() {
         this.config.save();
-        for(let group in Core.groups) {
-            Core.groups[group].emit('tick');
+        for(let group in this.groups) {
+            this.groups[group].emit('tick');
         }
     }
 
-    private static _defaults = Object.freeze(new Defaults());
+    private _defaults = Object.freeze(new Defaults());
 
-    private static _groups: { [alias:string] : BotGroup } = {};
-    private static _bots: { [alias:string] : Bot } = {};
-    private static _version:string = "0.0.0";
+    private _groups: { [alias:string] : BotGroup } = {};
+    private _bots: { [alias:string] : Bot } = {};
+    private _version:string = "0.0.0";
 }
 
 

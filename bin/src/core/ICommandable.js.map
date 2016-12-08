@@ -1,1 +1,1 @@
-{"version":3,"file":"ICommandable.js","sourceRoot":"","sources":["../../../src/core/ICommandable.ts"],"names":[],"mappings":";AAMA,WAAY,cAAc;IACtB,2DAAQ,CAAA;IACR,qDAAK,CAAA;IACL,6DAAS,CAAA;IACT,uDAAM,CAAA;AACV,CAAC,EALW,sBAAc,KAAd,sBAAc,QAKzB;AALD,IAAY,cAAc,GAAd,sBAKX,CAAA"}
+{"version":3,"file":"ICommandable.js","sourceRoot":"","sources":["../../../src/core/ICommandable.ts"],"names":[],"mappings":";AAOA,WAAY,cAAc;IACtB,2DAAQ,CAAA;IACR,qDAAK,CAAA;IACL,6DAAS,CAAA;IACT,uDAAM,CAAA;AACV,CAAC,EALW,sBAAc,KAAd,sBAAc,QAKzB;AALD,IAAY,cAAc,GAAd,sBAKX,CAAA"}

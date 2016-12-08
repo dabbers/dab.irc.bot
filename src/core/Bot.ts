@@ -6,15 +6,16 @@ import * as Manager from 'dab.irc.manager/src';
 import {IModuleHandler} from 'dab.irc.core/src';
 import {IBotModuleContext} from './IBotModuleContext';
 import {ICommandable} from './ICommandable';
+import {ICommandSettings} from './ManagedConfig';
 import {IDelayedCommandConfig} from './ManagedConfig';
 import {IBotConfig} from './ManagedConfig';
 import {BotGroup} from './BotGroup';
-import {Core} from './Core';
 import {Commandable} from './Commandable';
 import {ExceptionTypes} from './ICommandable';
 import {BotManagedServer} from './BotManagedServer';
 import {ModuleHandler} from './ModuleHandler';
 import {SenderChain} from './SenderChain';
+import * as coreStuff from './Core';
 
 export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<IBotModuleContext>, IBotModuleContext {
     
@@ -39,14 +40,16 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
         }
     }
 
+    hasNetwork(alias:string) : boolean {
+        return (this.servers[alias] != undefined);
+    }
     public settings : IBotConfig;
 
     public servers: { [alias: string] : BotManagedServer } = {};
 
     constructor(alias: string, group: BotGroup, settings: IBotConfig) {
         super(settings.Nick, settings.Ident, null);
-
-        this.name = Core.config.OwnerNicks + "'s bot";
+        this.name = (<any>global).Core.config.OwnerNicks + "'s bot";
         this._group = group;
         this._alias = alias;
         this.settings = settings;
@@ -55,6 +58,11 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
         this.events = new EventEmitter();
         this.moduleHandler = new ModuleHandler(this);
 
+        let apl = (sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => {
+            (<Commandable>this._commandable).onPrivmsg(sender, server, message);
+        };
+
+        this.on(Parser.Events.PRIVMSG, apl);
         for(let modid in this.settings.Modules) {
             this.load(this.settings.Modules[modid]);
         }
@@ -83,7 +91,7 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
             let m = (<Parser.ConversationMessage>message);
 
             if (m.ctcp == true && m.messageTags["intent"] == "VERSION") {
-                this.ctcp(server.alias, m.from.target, "NOTICE", "VERSION", "dab.irc.bot v" + Core.version);
+                this.ctcp(server.alias, m.from.target, "NOTICE", "VERSION", "dab.irc.bot v" + (<any>global).Core.version);
             }
         });
         this.on(Parser.Events.JOIN, (sender:IBotModuleContext, server:Manager.ManagedServer, message:ircCore.Message) => {
@@ -132,18 +140,18 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
         this.servers[alias] = server;
     }
 
-    disconnect(alias:string, quitmsg:string = "dab.irc.bot framework v" + Core.version) {
+    disconnect(alias:string, quitmsg:string = "dab.irc.bot framework v" + (<any>global).Core.version) {
         if (this.servers[alias]) {
             this.servers[alias].connection.write("QUIT :" + quitmsg);
         }
     }
 
     // Create a new instance of this module. Initialize and do things as needed
-    init(context : Core) : void {
+    init(context : coreStuff.Core) : void {
 
     }
     // We are resuming a persisted state (either in memory or from disk)
-    resume(context:Core, state : any) : void {
+    resume(context:coreStuff.Core, state : any) : void {
         
     }
     // Unloading this module. Return an optional state to store for reloading
@@ -174,7 +182,7 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
         return this.ctcp(net, destination, "PRIVMSG", "ACTION", message);
     }
     ctcp(net:string, destination:string, action:string, command:string, message:string) : IBotModuleContext {
-        return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");
+        return this.raw(net, action + " " + destination + " :\x01" + command + " " + message + "\x01");
     }
     join(net:string, channel:string, password?:string) : IBotModuleContext {
         return this.raw(net, "JOIN " + channel + " " + password);
@@ -227,10 +235,10 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
     ///
 
 
-    addCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable {
+    addCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => any) : ICommandable {
         return this._commandable.addCommand(command, options, cb);
     }
-    setCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable{
+    setCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => any) : ICommandable{
         return this._commandable.setCommand(command, options, cb);
     }
     delCommand(command:string) : ICommandable {

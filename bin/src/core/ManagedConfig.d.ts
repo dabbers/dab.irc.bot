@@ -1,3 +1,22 @@
+import * as ircCore from 'dab.irc.core/src';
+import * as Parser from 'dab.irc.parser/src';
+import { SenderChain } from './SenderChain';
+export interface ICommandExceptions {
+    channels: string[];
+    users: string[];
+    chanmodes: string[];
+    levels: string[];
+}
+export interface ICommandSettings {
+    locationbinds: string[];
+    level: number;
+    allowpm: boolean;
+    hidden: boolean;
+    exceptions: ICommandExceptions;
+    timer: number;
+    persist: boolean;
+    code: (sender: SenderChain, server: Parser.ParserServer, message: ircCore.Message) => any;
+}
 export interface INetworkSettings {
     host: string;
     port: number;
@@ -36,6 +55,7 @@ export interface IAuthConfig {
     password: string;
     encryption: string;
     level: number;
+    BotGroup: string[];
 }
 export interface IFrameworkConfig {
     OwnerNicks: string;

@@ -36,78 +36,80 @@ class Defaults {
 }
 exports.Defaults = Defaults;
 class Core {
-    static get version() {
+    constructor() {
+        this.loaded = false;
+        this._defaults = Object.freeze(new Defaults());
+        this._groups = {};
+        this._bots = {};
+        this._version = "0.0.0";
+    }
+    get version() {
         return this._version;
     }
-    static get defaults() {
-        return Core._defaults;
+    get defaults() {
+        return this._defaults;
     }
-    static init(version, config) {
+    init(version, config) {
         this._version = version;
-        Core.config = ManagedConfig.ManagedConfig.createConfig(config);
-        for (let group in Core.config.BotGroups) {
-            Core.addGroup(group, Core.config.BotGroups[group]);
+        this.config = ManagedConfig.ManagedConfig.createConfig(config);
+        for (let group in this.config.BotGroups) {
+            this.addGroup(group, this.config.BotGroups[group]);
         }
     }
-    static get groups() {
-        return Core._groups;
+    get groups() {
+        return this._groups;
     }
-    static get bots() {
-        return Core._bots;
+    get bots() {
+        return this._bots;
     }
-    static addGroup(name, settings) {
+    addGroup(name, settings) {
         if (settings === undefined)
             settings = JSON.parse(JSON.stringify(this.defaults.groupSettings));
         else {
-            for (let key in Core.defaults.groupSettings) {
-                if (!settings[key])
-                    settings[key] = Core.defaults.groupSettings[key];
+            for (let key in this.defaults.groupSettings) {
+                if (settings[key] == undefined)
+                    settings[key] = this.defaults.groupSettings[key];
             }
         }
         let group = new BotGroup_1.BotGroup(name, settings);
         this._groups[name] = group;
-        group.init(Core);
+        group.init(this);
         return group;
     }
-    static delGroup(name) {
+    delGroup(name) {
     }
-    static addBot(group, alias, settings) {
+    addBot(group, alias, settings) {
         if (settings === undefined)
             settings = JSON.parse(JSON.stringify(this.defaults.botSetting));
         else {
-            for (let key in Core.defaults.botSetting) {
-                if (!settings[key])
-                    settings[key] = Core.defaults.botSetting[key];
+            for (let key in this.defaults.botSetting) {
+                if (settings[key] == undefined)
+                    settings[key] = this.defaults.botSetting[key];
             }
         }
         if (settings.Nick === undefined || settings.Nick.length == 0) {
             settings.Nick = alias;
         }
         if (group === null) {
-            Core.addGroup(alias);
+            this.addGroup(alias);
         }
         let bot = new Bot_1.Bot(alias, group, settings);
-        Core.bots[alias] = bot;
+        this.bots[alias] = bot;
         return bot;
     }
-    static randomServer(alias) {
+    randomServer(alias) {
         let ran = this.config.Networks[alias][Math.floor((Math.random() * this.config.Networks[alias].length))];
         let parts = ran.split(':');
         let port = (parts[1] ? (parts[1][0] == "+" ? parseInt(parts[1].substring(1)) : parseInt(parts[1])) : 6667);
         let ssl = parts[1][0] == "+";
         return { "host": parts[0], "port": port, "ssl": ssl };
     }
-    static tick() {
+    tick() {
         this.config.save();
-        for (let group in Core.groups) {
-            Core.groups[group].emit('tick');
+        for (let group in this.groups) {
+            this.groups[group].emit('tick');
         }
     }
 }
-Core.loaded = false;
-Core._defaults = Object.freeze(new Defaults());
-Core._groups = {};
-Core._bots = {};
-Core._version = "0.0.0";
 exports.Core = Core;
 //# sourceMappingURL=Core.js.map

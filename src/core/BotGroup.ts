@@ -16,8 +16,8 @@ import {ModuleHandler} from './ModuleHandler';
 import {Bot} from './Bot';
 import {BotManagedServer} from './BotManagedServer';
 import {BotConnectionContext} from './BotConnectionContext';
-import {Core} from './Core';
 import {SenderChain} from './SenderChain';
+import * as coreStuff from './Core';
 
 export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleContext {
 
@@ -42,6 +42,12 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         for(let i in this.bots) {
             this.bots[i].emit('tick');
         }
+    }
+    hasNetwork(alias:string) : boolean {
+        return (this._channelManager[alias] != undefined);
+    }
+    get networks(): {[alias:string]:Manager.ChannelManager} { 
+        return this._channelManager;
     }
     public settings : IGroupConfig;
 
@@ -68,7 +74,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         return this.ctcp(net, destination, "PRIVMSG", "ACTION", message);
     }
     ctcp(net:string, destination:string, action:string, command:string, message:string) : IBotModuleContext {
-        return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");;
+        return this.raw(net, action + " " + destination + " :\x01" + command + " " + message + "\x01");;
     }
     join(net:string, channel:string, password?:string) : IBotModuleContext {
         return this.raw(net, "JOIN " + channel + " " + password);
@@ -96,6 +102,13 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         this.events = new EventEmitter();
 
         this.on('tick', this.tick);
+
+        let apl = (sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => {
+            (<Commandable>this._commandable).onPrivmsg(sender, server, message);
+        };
+
+        this.on(Parser.Events.PRIVMSG, apl);
+
         let rawCmd = this.settings.RawCommandPrefix || (this.settings.CommandPrefix + this.settings.CommandPrefix);
         let rawOptions : ICommandSettings = {
             locationbinds : undefined,
@@ -107,10 +120,55 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             exceptions: undefined,
             code: undefined
         };
-        let rawCode = (sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => {
+        let rawCode = (sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => {
 
+            let bot = sender.bot;
+
+            let group = sender.group; // alias/shortcut
+            let channel = (<Parser.ConversationMessage>message).destination;
+            const Core = coreStuff.Core;
+
+            try {
+                var re = eval( message.tokenized.splice(4).join(" ") );
+                
+                if (re != undefined && re != null) {
+                    var lines = re.toString().split("\n");
+                    
+                    for(var i in lines)
+                    {
+                        bot.say(server.alias, channel.target, lines[i]);
+                    }
+                }
+            }
+            catch(exception) {
+                bot.say(server.alias, channel.target, "[RAWERR] " + exception);
+            }
         };
         this.addCommand(rawCmd, rawOptions, rawCode);
+        this.addCommand("test", (<any>global).Core.defaults.commandOptions, (s,ser,me) => {s.bot.say(ser.alias, (<Parser.ConversationMessage>me).destination.target, "test")});
+
+        let loginCmd = "login";
+        let loginOptions : ICommandSettings = {
+            locationbinds : undefined,
+            level: 3,
+            allowpm: true,
+            persist: false,
+            timer: 0,
+            hidden: true,
+            exceptions: undefined,
+            code: undefined
+        };
+        let loginCode =  (sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => {
+            let m = (<Parser.ConversationMessage>message);
+            let logres = false;
+
+            // Don't let servers authenticate. That'd be weird...
+            if (m.from instanceof ircCore.User) {
+                logres = this.attemptLogin(server.alias, m.from.nick, m.from.ident, m.from.host, m.tokenized[4]);
+            }
+            sender.bot.say(server.alias, m.destination.target, (logres ? "Success! Logged in" : "Failed to login"));
+        }
+        this.addCommand(loginCmd, loginOptions, loginCode);
     }
 
     addBot(bot:Bot) {
@@ -133,13 +191,16 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         bot.on(Parser.Numerics.ENDOFMOTD, onconnect);
         bot.on(Parser.Numerics.ERR_NOMOTD, onconnect);
 
-        bot.on(Parser.Events.PRIVMSG, (sender:SenderChain, server:Manager.ManagedServer, message: ircCore.Message) => {
-            if (message instanceof Parser.ConversationMessage) {
-                if (!this.botCanExecute(sender.bot, server, message.destination)) return;
+        bot.on(Parser.Events.PRIVMSG, (sender:SenderChain, server:Manager.ManagedServer, m: ircCore.Message) => {
+            if (m instanceof Parser.ConversationMessage) {
+                if (!this.botCanExecute(sender.bot, server, m.destination)) return;
 
-                this.emit(Parser.Events.PRIVMSG, new SenderChain(sender.bot, this), server, message, bot);
+                let sc = new SenderChain(sender.bot, SenderChain.proxyActionsForShortcuts(this, m, server.alias));
+                this.emit(Parser.Events.PRIVMSG, sc, server, m, bot);
             }
         });
+
+        this.bots[bot.alias] = bot;
     }
 
     delBot(bot:Bot) {
@@ -148,7 +209,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             for(let n in bot.servers) {
                 // Clear our out buffer so our QUIT message will send immediately
                 bot.servers[n].connection.clear();
-                bot.servers[n].connection.write("QUIT :dab.irc.bot Framework v" + Core.version);
+                bot.servers[n].connection.write("QUIT :dab.irc.bot Framework v" + (<any>global).Core.version);
                 bot.servers[n].connection.disconnect();
             }
 
@@ -188,7 +249,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         let bot:Bot = null;
 
         let allbots = Object.keys(this.bots);
-
+console.log(allbots);
         if (serverAlias instanceof Manager.ManagedServer) {
             svr = serverAlias.alias;
         }
@@ -203,9 +264,10 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             chan = channel;
         }
 
-        for(let botnick in allbots) {
+        for(let botnick in this.bots) {
+            console.log(this._channelManager[svr].channel[chan]);
             if (!this._channelManager[svr].channel[chan]) continue;
-
+            console.log(botnick, this._channelManager[svr].channel[chan].users);
             if (this._channelManager[svr].channel[chan].users[ botnick ]) {
                 bot = this.bots[ botnick ];
                 break;
@@ -215,9 +277,9 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         return bot;
     }
     // Create a new instance of this module. Initialize and do things as needed
-    init(context : Core) : void {
+    init(context : coreStuff.Core) : void {
         for(let botAlias in this.settings.Bots) {
-            let bot = Core.addBot(this, botAlias, this.settings.Bots[botAlias]);
+            let bot = (<any>global).Core.addBot(this, botAlias, this.settings.Bots[botAlias]);
             this.addBot(bot);
         }
 
@@ -230,7 +292,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         }
     }
     // We are resuming a persisted state (either in memory or from disk)
-    resume(context:Core, state : any) : void {
+    resume(context:coreStuff.Core, state : any) : void {
 
     }
     // Unloading this module. Return an optional state to store for reloading
@@ -239,11 +301,11 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     }
 
     connect(network:string, connectionString?:(string|string[])) {
-        if (connectionString && !Core.config.Networks[network]) {
+        if (connectionString && !(<any>global).Core.config.Networks[network]) {
             if (!(connectionString instanceof Array)) {
                 connectionString = [connectionString];
             }
-            Core.config.Networks[network] = connectionString;
+            (<any>global).Core.config.Networks[network] = connectionString;
         }
 
         if (this._channelManager[network]) {
@@ -257,16 +319,17 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             return;
         }
 
-        let net = Core.randomServer(network);
         let cm = new Manager.ChannelManager();
+        this._channelManager[network] = cm;
 
         for(let bot in this.bots) {
+            let net = (<any>global).Core.randomServer(network);
             let user = new ircCore.User(this.bots[bot].settings.Nick, this.bots[bot].settings.Ident, null);
-            user.name = Core.config.OwnerNicks + "'s bot";
+            user.name = (<any>global).Core.config.OwnerNicks + "'s bot";
 
-            let bcc = new BotConnectionContext(user, net.host, net.port, net.ssl, !Core.config.ValidateSslCerts);
+            let bcc = new BotConnectionContext(user, net.host, net.port, net.ssl, (<any>global).Core.config.ValidateSslCerts);
             let con : ircCore.Connection = new ircCore.Connection();
-            let bms =  new BotManagedServer(this.bots[bot], network, bcc, con, null, cm);
+            let bms =  new BotManagedServer(this.bots[bot], network, bcc, con, undefined, cm);
             this.bots[bot].connect(network,bms);
 
             // We want to wait to connect until all of our objects have created their callbacks
@@ -280,7 +343,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
             if (this.bots[bot].servers[alias]) {
                 // Clear our out buffer so our QUIT message will send immediately
                 this.bots[bot].servers[alias].connection.clear();
-                this.bots[bot].servers[alias].connection.write("QUIT :dab.irc.bot Framework v" + Core.version);
+                this.bots[bot].servers[alias].connection.write("QUIT :dab.irc.bot Framework v" + (<any>global).Core.version);
                 this.bots[bot].servers[alias].connection.disconnect();
             }
         }
@@ -325,10 +388,10 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     /// End recreating event listener methods
     ///
 
-    addCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable {
+    addCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => any) : ICommandable {
         return this._commandable.addCommand(command, options, cb);
     }
-    setCommand(command:string, options:any, cb:(sender: SenderChain, server:Parser.ParserServer, message:ircCore.Message) => any) : ICommandable{
+    setCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => any) : ICommandable{
         return this._commandable.setCommand(command, options, cb);
     }
     delCommand(command:string) : ICommandable {
@@ -355,10 +418,33 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
     delLocationBind(command: string, index:number) {
         return this._commandable.delLocationBind(command, index);
     }
+
+    private attemptLogin(alias:string, nick:string, ident:string, host:string, password:string) : boolean {
+        if (!this.hasNetwork(alias)) return false;
+        let auths = (<any>global).Core.config.Auth;
+        for(let i =0; i < auths.length; i++) {
+            if (auths[i].BotGroup && auths[i].BotGroup.indexOf(this.alias) == -1) continue;
+
+            let parts = auths[i].login.replace(/\./g, "\\.").replace(/\*/g, ".*").split(/[!@]/);
+            if (new RegExp(parts[0]).test(nick) && new RegExp(parts[1]).test(ident) &&
+                    new RegExp(parts[2]).test(host)) {
+                
+                let enc: Function = new Function("pw", auths[i].encryption);//eval("function enc(pw) " + auths[i].encryption);
+
+                if (enc(password) == auths[i].encryption) {
+                    if (! this.logins[alias]) this.logins[alias] = {};
+                    this.logins[alias][nick] = auths[i].level;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     private events :EventEmitter;
     protected _alias:string;
     private _commandable:ICommandable;
+    private logins: { [alias:string] : { [nick:string] : number} } = {};
     protected moduleHandler:IModuleHandler<IBotModuleContext>;
     protected _bots:{ [name:string] : Bot} = {};
-    protected _channelManager :  {[alias:string] : Manager.ChannelManager};
+    protected _channelManager :  {[alias:string] : Manager.ChannelManager} = {};
 }

@@ -2,20 +2,23 @@
 const events_1 = require('events');
 const Parser = require('dab.irc.parser/src');
 const Manager = require('dab.irc.manager/src');
-const Core_1 = require('./Core');
 const Commandable_1 = require('./Commandable');
 const ModuleHandler_1 = require('./ModuleHandler');
 class Bot extends Manager.ManagedUser {
     constructor(alias, group, settings) {
         super(settings.Nick, settings.Ident, null);
         this.servers = {};
-        this.name = Core_1.Core.config.OwnerNicks + "'s bot";
+        this.name = global.Core.config.OwnerNicks + "'s bot";
         this._group = group;
         this._alias = alias;
         this.settings = settings;
         this._commandable = new Commandable_1.Commandable(this);
         this.events = new events_1.EventEmitter();
         this.moduleHandler = new ModuleHandler_1.ModuleHandler(this);
+        let apl = (sender, server, message) => {
+            this._commandable.onPrivmsg(sender, server, message);
+        };
+        this.on(Parser.Events.PRIVMSG, apl);
         for (let modid in this.settings.Modules) {
             this.load(this.settings.Modules[modid]);
         }
@@ -42,7 +45,7 @@ class Bot extends Manager.ManagedUser {
         this.on(Parser.Events.PRIVMSG, (sender, server, message) => {
             let m = message;
             if (m.ctcp == true && m.messageTags["intent"] == "VERSION") {
-                this.ctcp(server.alias, m.from.target, "NOTICE", "VERSION", "dab.irc.bot v" + Core_1.Core.version);
+                this.ctcp(server.alias, m.from.target, "NOTICE", "VERSION", "dab.irc.bot v" + global.Core.version);
             }
         });
         this.on(Parser.Events.JOIN, (sender, server, message) => {
@@ -92,10 +95,13 @@ class Bot extends Manager.ManagedUser {
             this.servers[i].connection.tick();
         }
     }
+    hasNetwork(alias) {
+        return (this.servers[alias] != undefined);
+    }
     connect(alias, server) {
         this.servers[alias] = server;
     }
-    disconnect(alias, quitmsg = "dab.irc.bot framework v" + Core_1.Core.version) {
+    disconnect(alias, quitmsg = "dab.irc.bot framework v" + global.Core.version) {
         if (this.servers[alias]) {
             this.servers[alias].connection.write("QUIT :" + quitmsg);
         }
@@ -128,7 +134,7 @@ class Bot extends Manager.ManagedUser {
         return this.ctcp(net, destination, "PRIVMSG", "ACTION", message);
     }
     ctcp(net, destination, action, command, message) {
-        return this.raw(net, action + " " + destination + " :\001" + command + " " + message + "\001");
+        return this.raw(net, action + " " + destination + " :\x01" + command + " " + message + "\x01");
     }
     join(net, channel, password) {
         return this.raw(net, "JOIN " + channel + " " + password);

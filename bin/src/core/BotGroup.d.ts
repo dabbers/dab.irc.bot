@@ -1,14 +1,14 @@
-import * as Parser from 'dab.irc.parser/src';
 import * as ircCore from 'dab.irc.core/src';
 import * as Manager from 'dab.irc.manager/src';
 import { IModuleHandler } from 'dab.irc.core/src';
 import { IBotModuleContext } from './IBotModuleContext';
 import { ICommandable } from './ICommandable';
 import { IGroupConfig } from './ManagedConfig';
+import { ICommandSettings } from './ManagedConfig';
 import { ExceptionTypes } from './ICommandable';
 import { Bot } from './Bot';
-import { Core } from './Core';
 import { SenderChain } from './SenderChain';
+import * as coreStuff from './Core';
 export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleContext {
     readonly modules: {
         [name: string]: ircCore.IModule<IBotModuleContext>;
@@ -20,6 +20,10 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
         [name: string]: Bot;
     };
     tick(): void;
+    hasNetwork(alias: string): boolean;
+    readonly networks: {
+        [alias: string]: Manager.ChannelManager;
+    };
     settings: IGroupConfig;
     load(name: string, noResume?: boolean): IModuleHandler<IBotModuleContext>;
     unload(name: string, persist: boolean): IModuleHandler<IBotModuleContext>;
@@ -35,12 +39,14 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     rawBot(net: string, bot: Bot, text: string): IBotModuleContext;
     constructor(alias: string, config: IGroupConfig);
     addBot(bot: Bot): void;
-    botCanExecute(bot: Bot, svralias: (string | Manager.ManagedServer), channel: (string | ircCore.Channel)): boolean;
-    getBotExecutor(serverAlias: (string | Manager.ManagedServer), channel: (string | ircCore.Channel)): Bot;
-    init(context: Core): void;
-    resume(context: Core, state: any): void;
+    delBot(bot: Bot): void;
+    botCanExecute(bot: Bot, svralias: (string | Manager.ManagedServer), channel: (string | ircCore.Target.ITarget)): boolean;
+    getBotExecutor(serverAlias: (string | Manager.ManagedServer), channel: (string | ircCore.Target.ITarget)): Bot;
+    init(context: coreStuff.Core): void;
+    resume(context: coreStuff.Core, state: any): void;
     uninit(): any;
     connect(network: string, connectionString?: (string | string[])): void;
+    disconnect(alias: string): void;
     on(event: string, listener: Function): IBotModuleContext;
     once(event: string, listener: Function): IBotModuleContext;
     emit(event: string, ...args: any[]): IBotModuleContext;
@@ -49,8 +55,8 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     removeAllListeners(event?: string): IBotModuleContext;
     listeners(event: string): Function[];
     eventNames(): (string | symbol)[];
-    addCommand(command: string, options: any, cb: (sender: SenderChain, server: Parser.ParserServer, message: ircCore.Message) => any): ICommandable;
-    setCommand(command: string, options: any, cb: (sender: SenderChain, server: Parser.ParserServer, message: ircCore.Message) => any): ICommandable;
+    addCommand(command: string, options: ICommandSettings, cb: (sender: SenderChain, server: Manager.ManagedServer, message: ircCore.Message) => any): ICommandable;
+    setCommand(command: string, options: ICommandSettings, cb: (sender: SenderChain, server: Manager.ManagedServer, message: ircCore.Message) => any): ICommandable;
     delCommand(command: string): ICommandable;
     addException(command: string, type: ExceptionTypes, match: string, seconds: number): ICommandable;
     listExceptions(command: string, type: ExceptionTypes): ICommandable;
@@ -58,9 +64,11 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     addLocationBind(command: string, server: string, channel: string, mode: string): ICommandable;
     listLocationBinds(command: string): ICommandable;
     delLocationBind(command: string, index: number): ICommandable;
+    private attemptLogin(alias, nick, ident, host, password);
     private events;
     protected _alias: string;
     private _commandable;
+    private logins;
     protected moduleHandler: IModuleHandler<IBotModuleContext>;
     protected _bots: {
         [name: string]: Bot;

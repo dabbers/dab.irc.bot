@@ -31,24 +31,24 @@ export declare class Defaults {
     };
 }
 export declare class Core {
-    static loaded: boolean;
-    static readonly version: string;
-    static readonly defaults: Defaults;
-    static config: ManagedConfig.ManagedConfig;
-    static init(version: string, config: string): void;
-    static readonly groups: {
+    loaded: boolean;
+    readonly version: string;
+    readonly defaults: Defaults;
+    config: ManagedConfig.ManagedConfig;
+    init(version: string, config: string): void;
+    readonly groups: {
         [alias: string]: BotGroup;
     };
-    static readonly bots: {
+    readonly bots: {
         [alias: string]: Bot;
     };
-    static addGroup(name: string, settings?: ManagedConfig.IGroupConfig): BotGroup;
-    static delGroup(name: string): void;
-    static addBot(group: BotGroup, alias: string, settings?: ManagedConfig.IBotConfig): Bot;
-    static randomServer(alias: string): ManagedConfig.INetworkSettings;
-    static tick(): void;
-    private static _defaults;
-    private static _groups;
-    private static _bots;
-    private static _version;
+    addGroup(name: string, settings?: ManagedConfig.IGroupConfig): BotGroup;
+    delGroup(name: string): void;
+    addBot(group: BotGroup, alias: string, settings?: ManagedConfig.IBotConfig): Bot;
+    randomServer(alias: string): ManagedConfig.INetworkSettings;
+    tick(): void;
+    private _defaults;
+    private _groups;
+    private _bots;
+    private _version;
 }

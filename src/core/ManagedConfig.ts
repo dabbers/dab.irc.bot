@@ -56,6 +56,7 @@ export interface IAuthConfig {
     password: string;
     encryption: string;
     level: number;
+    BotGroup: string[];
 }
 
 export interface IFrameworkConfig {

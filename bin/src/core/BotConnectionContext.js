@@ -9,6 +9,7 @@ class BotConnectionContext {
         this.ssl = true;
         this.rejectUnauthedCerts = false;
         this.connectionEstablishedCallback = (c) => {
+            console.log("CONNECTION");
             c.write("NICK " + this.me.nick);
             c.write("USER " + this.me.ident + " 8 * :" + this.me.name);
         };

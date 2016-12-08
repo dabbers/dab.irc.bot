@@ -1,0 +1,61 @@
+{
+	"OwnerNicks": "dab",
+
+	"AuthVerification":"#dab.beta",
+	"ValidateSslCerts":false,
+	"Networks": {
+		"ggxy": [
+			"navi.gamergalaxy.net:+6697"
+		]
+	},
+
+	"BotGroups": {
+		"dbot": {
+			"Networks": [
+				{
+					"Network":"ggxy",
+					"Channels": [
+						"#dab.beta"
+					] 
+				}
+			],
+			"Bots": {
+				"DoBot":{
+					"Nick":"DoBot",
+					"Ident":"dobot",
+					"Channels": {
+					},
+					"Modules":[],
+                    "Commands": {
+                        "ggxy": [
+                            "PRIVMSG dab :testing",
+                            {"delay":10000, "command":"PRIVMSG dab :delayed message" }
+                        ]
+                    }
+				}
+			},
+			"Modules": [],
+			"CommandPrefix":"@",
+			"RawCommandPrefix":"@@"
+		}
+	},
+	"Auth": [
+		{
+			"login": "*!*@*",
+			"password": "123abc",
+			"encryption":"{ return pw; }",
+			"level":3
+		},
+
+		{
+			"login": "josh!*@*",
+			"password": "123abc",
+			"encryption":"{ return pw; }",
+			"level":2,
+			"BotGroup":["cibby"]
+		}
+	],
+    "Modules": {
+
+    }
+}
