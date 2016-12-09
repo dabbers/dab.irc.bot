@@ -34,6 +34,10 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
         return true;
     }
 
+    public get commands(): { [cmd:string] : ICommandSettings }  {
+        return this._commandable.commands;
+    }
+
     public tick() : void {
         for(let i in this.servers) {
             this.servers[i].connection.tick();

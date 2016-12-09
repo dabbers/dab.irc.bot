@@ -91,6 +91,9 @@ class BotGroup {
     get bots() {
         return this._bots;
     }
+    get commands() {
+        return this._commandable.commands;
+    }
     tick() {
         for (let i in this.bots) {
             this.bots[i].emit('tick');

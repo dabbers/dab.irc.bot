@@ -19,6 +19,9 @@ export declare class Bot extends Manager.ManagedUser implements ircCore.IModuleH
     readonly alias: string;
     readonly group: BotGroup;
     readonly isBot: boolean;
+    readonly commands: {
+        [cmd: string]: ICommandSettings;
+    };
     tick(): void;
     hasNetwork(alias: string): boolean;
     settings: IBotConfig;

@@ -14,6 +14,7 @@ export enum ExceptionTypes {
 
 export interface ICommandable {
 
+    commands: { [cmd:string] : ICommandSettings };
     addCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
     setCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:Parser.ParserServer, message:Core.Message) => any) : ICommandable;
     delCommand(command:string) : ICommandable;

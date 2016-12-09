@@ -10,6 +10,10 @@ import {ManagedServer} from 'dab.irc.manager/src';
 import {BotGroup} from './BotGroup';
 
 export class Commandable implements ICommandable {
+
+    public get commands() : { [cmd:string] : ICommandSettings } {
+        return this._commands;
+    }
     constructor(host:ICommandable) {
         this._host = host;
         this._commands = {};
@@ -25,6 +29,11 @@ export class Commandable implements ICommandable {
 
     addCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:ManagedServer, message:Core.Message) => any) : ICommandable {
         if (!options) {
+            options = JSON.parse(JSON.stringify((<any>global).Core.defaults.commandOptions));
+        }
+
+        if ( cb == undefined ) {
+            cb = (<any>options);
             options = JSON.parse(JSON.stringify((<any>global).Core.defaults.commandOptions));
         }
 

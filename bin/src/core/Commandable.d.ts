@@ -6,6 +6,9 @@ import { SenderChain } from './SenderChain';
 import { ICommandSettings } from './ManagedConfig';
 import { ManagedServer } from 'dab.irc.manager/src';
 export declare class Commandable implements ICommandable {
+    readonly commands: {
+        [cmd: string]: ICommandSettings;
+    };
     constructor(host: ICommandable);
     onPrivmsg(sender: SenderChain, server: Parser.ParserServer, message: Core.Message): void;
     addCommand(command: string, options: ICommandSettings, cb: (sender: SenderChain, server: ManagedServer, message: Core.Message) => any): ICommandable;

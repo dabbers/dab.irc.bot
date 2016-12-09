@@ -34,7 +34,7 @@ export class BotManagedServer extends Manager.ManagedServer {
         else {
             sc = new SenderChain(this.bot);
         }
-        args.splice(0, 0, event, new SenderChain(this.bot));
+        args.splice(0, 0, event, sc);
         this.bot.emit.apply(this.bot, args);
     }
 

@@ -13,13 +13,15 @@ class BotManagedServer extends Manager.ManagedServer {
         super.emit.apply(this, arg2);
         let sc = null;
         if (args[1] instanceof Parser.ConversationMessage) {
+            console.log("BLAH BLAH CONVERSATION MESSAGE");
             let m = args[1];
             sc = new SenderChain_1.SenderChain(SenderChain_1.SenderChain.proxyActionsForShortcuts(this.bot, m, this.alias));
+            console.log("post blah convo", sc.bot.say);
         }
         else {
             sc = new SenderChain_1.SenderChain(this.bot);
         }
-        args.splice(0, 0, event, new SenderChain_1.SenderChain(this.bot));
+        args.splice(0, 0, event, sc);
         this.bot.emit.apply(this.bot, args);
     }
 }

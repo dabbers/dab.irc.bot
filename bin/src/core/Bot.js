@@ -90,6 +90,9 @@ class Bot extends Manager.ManagedUser {
     get isBot() {
         return true;
     }
+    get commands() {
+        return this._commandable.commands;
+    }
     tick() {
         for (let i in this.servers) {
             this.servers[i].connection.tick();

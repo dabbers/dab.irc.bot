@@ -38,6 +38,10 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         return this._bots;
     }
 
+    public get commands(): { [cmd:string] : ICommandSettings }  {
+        return this._commandable.commands;
+    }
+
     public tick() : void {
         for(let i in this.bots) {
             this.bots[i].emit('tick');
@@ -249,7 +253,6 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
         let bot:Bot = null;
 
         let allbots = Object.keys(this.bots);
-console.log(allbots);
         if (serverAlias instanceof Manager.ManagedServer) {
             svr = serverAlias.alias;
         }
@@ -265,9 +268,8 @@ console.log(allbots);
         }
 
         for(let botnick in this.bots) {
-            console.log(this._channelManager[svr].channel[chan]);
             if (!this._channelManager[svr].channel[chan]) continue;
-            console.log(botnick, this._channelManager[svr].channel[chan].users);
+            
             if (this._channelManager[svr].channel[chan].users[ botnick ]) {
                 bot = this.bots[ botnick ];
                 break;

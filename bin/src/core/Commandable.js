@@ -6,6 +6,9 @@ class Commandable {
         this._host = host;
         this._commands = {};
     }
+    get commands() {
+        return this._commands;
+    }
     onPrivmsg(sender, server, message) {
         let command = message.firstWord.toLocaleLowerCase();
         if (!this._commands[command]) {
@@ -15,6 +18,10 @@ class Commandable {
     }
     addCommand(command, options, cb) {
         if (!options) {
+            options = JSON.parse(JSON.stringify(global.Core.defaults.commandOptions));
+        }
+        if (cb == undefined) {
+            cb = options;
             options = JSON.parse(JSON.stringify(global.Core.defaults.commandOptions));
         }
         command = command.toLocaleLowerCase();

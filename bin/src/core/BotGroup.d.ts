@@ -19,6 +19,9 @@ export declare class BotGroup implements IModuleHandler<IBotModuleContext>, IBot
     readonly bots: {
         [name: string]: Bot;
     };
+    readonly commands: {
+        [cmd: string]: ICommandSettings;
+    };
     tick(): void;
     hasNetwork(alias: string): boolean;
     readonly networks: {
