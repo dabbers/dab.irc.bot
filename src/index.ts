@@ -9,7 +9,7 @@ const settings = require('../../package.json');
 (<any>global).Core = new Core();
 (<any>global).die = () => {
     for(let group in (<any>global).Core.groups) {
-        let nets = Object.keys((<any>global).bal.Core.groups[group]);
+        let nets = Object.keys((<any>global).Core.groups[group]);
 
         for(let net in nets) (<any>global).Core.groups[group].disconnect(net);
     }
@@ -23,7 +23,8 @@ const settings = require('../../package.json');
 
 
 
-
-(<any>global).Core.init(settings.version, path.join( __dirname, "..", "..", "botconfig.json" ) );
+let cfg = path.join( __dirname, "..", "..", "botconfig.json" );
+let stor = path.join( __dirname, "..", "storage");
+(<any>global).Core.init(settings.version, cfg, stor );
 setInterval( function() { (<any>global).Core.tick(); }, 60);
 

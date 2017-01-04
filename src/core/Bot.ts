@@ -238,7 +238,6 @@ export class Bot extends Manager.ManagedUser implements ircCore.IModuleHandler<I
     /// End recreating event listener methods
     ///
 
-
     addCommand(command:string, options:ICommandSettings, cb:(sender: SenderChain, server:Manager.ManagedServer, message:ircCore.Message) => any) : ICommandable {
         return this._commandable.addCommand(command, options, cb);
     }

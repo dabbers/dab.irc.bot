@@ -1,5 +1,6 @@
 import * as fs from 'fs';
-const watch = require("watchwithproxy");
+
+import * as watch from 'watchwithproxy/src';
 
 import * as ircCore from 'dab.irc.core/src';
 import * as Parser from 'dab.irc.parser/src';
@@ -85,7 +86,7 @@ export class ManagedConfig implements IFrameworkConfig {
     constructor(cfgPath:string) {
         this.rawSettings = <IFrameworkConfig>require(cfgPath);
         
-        watch.Watcher.Watch(this.rawSettings, new watch.WatchOptions(), (s:any, p:string, o:any, n:any) => {
+        this.rawSettings = watch.Watcher.Watch(this.rawSettings, new watch.WatchOptions(), (s:any, p:string, o:any, n:any) => {
             this.isDirty = true;
         });
         this.path = cfgPath;
@@ -124,24 +125,6 @@ export class ManagedConfig implements IFrameworkConfig {
         });
 
         return n;
-    }
-
-    // Modifies the object to become proxified
-    private convertToproxy(obj:any):any {
-        if (obj === undefined || obj === null || obj instanceof String || obj instanceof Number) {
-            return obj;
-        }
-        else if (obj instanceof Array) {
-            for(let i = 0; i < obj.length; i++) {
-
-            }
-        }
-        else {
-            let keys = Object.keys(obj);
-            for(let i in keys) {
-
-            }
-        }
     }
 
     public rawSettings:IFrameworkConfig;

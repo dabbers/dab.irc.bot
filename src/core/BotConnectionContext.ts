@@ -1,7 +1,6 @@
 import net = require('net');
 import tls = require('tls');
 
-
 import * as ircCore from 'dab.irc.core/src';
 import * as Parser from 'dab.irc.parser/src';
 

@@ -278,6 +278,7 @@ export class BotGroup implements IModuleHandler<IBotModuleContext>, IBotModuleCo
 
         return bot;
     }
+    
     // Create a new instance of this module. Initialize and do things as needed
     init(context : coreStuff.Core) : void {
         for(let botAlias in this.settings.Bots) {

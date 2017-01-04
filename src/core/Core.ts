@@ -3,7 +3,7 @@ import * as path from 'path';
 import {Bot} from './Bot';
 import {BotGroup} from './BotGroup';
 import * as ManagedConfig from './ManagedConfig';
-
+import * as Storages from './Storage';
 export class Defaults {
     public get groupSettings() {
         return <ManagedConfig.IGroupConfig>{"Networks":[], "Bots":{}, "Modules":[], "CommandPrefix":"!"};
@@ -50,11 +50,12 @@ export class Core {
     }
     // __dirname = /path/to/bot/bin/src/core/Core.js
     public  config : ManagedConfig.ManagedConfig;
+    public  storage : Storages.Storage;
 
-    public  init(version:string, config:string) {
+    public  init(version:string, config:string, storage:string) {
         this._version = version;
         this.config = ManagedConfig.ManagedConfig.createConfig(config);
-
+        this.storage = new Storages.Storage( storage );
         for(let group in this.config.BotGroups) {
             this.addGroup(group, this.config.BotGroups[group]);
         }
@@ -84,7 +85,11 @@ export class Core {
     }
 
     public  delGroup(name:string) {
+        for(let n in this.groups[name].networks) {
+            this.groups[name].disconnect(n);
+        }
 
+        delete this.config.BotGroups[name];
     }
 
     public addBot(group:BotGroup, alias:string, settings?:ManagedConfig.IBotConfig) : Bot {
